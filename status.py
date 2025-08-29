@@ -684,7 +684,7 @@ def run_monitor(instruments_df, values_yesterday, shares_yesterday):
         time.sleep(intervall)
 
 def main():
-    settings = initializing("kursabfrage_settings.ini", screen=False)
+    settings = initializing("status.ini", screen=False)
     if settings is None:
         print("Error: Could not initialize settings")
         return
