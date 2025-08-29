@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Aktuelle Uhrzeit</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 2em;
+      text-align: center;
+      margin-top: 5%;
+    }
+
+    table {
+      font-size: 0.7em;
+      margin: auto;
+      border-collapse: collapse;
+      margin-top: 2em;
+    }
+
+    th, td {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      text-align: right;
+    }
+
+    th:first-child, td:first-child {
+      text-align: left;
+    }
+
+    .negative {
+      color: red;
+    }
+
+    .positive {
+      color: green;
+    }
+  </style>
+</head>
+<body>
+  <p>hello {{person}}</p>
+  <div id="uhrzeit"></div>
+
+  <script>
+    function aktuelleZeitAnzeigen() {
+      const jetzt = new Date();
+      const stunden = String(jetzt.getHours()).padStart(2, '0');
+      const minuten = String(jetzt.getMinutes()).padStart(2, '0');
+      const sekunden = String(jetzt.getSeconds()).padStart(2, '0');
+      document.getElementById('uhrzeit').textContent = `${stunden}:${minuten}:${sekunden}`;
+    }
+
+    setInterval(aktuelleZeitAnzeigen, 1000);
+    aktuelleZeitAnzeigen();
+  </script>
+
+  <table id="depot-tabelle">
+    <thead>
+      <tr>
+        <th>WKN</th>
+        <th>Aktueller Preis</th>
+        <th>Kursdiff</th>
+        <th>Kursdiff (%)</th>
+        <th>Wertdiff (€)</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    function ladeDepotdaten() {
+      fetch('/static/depotdaten.json')
+        .then(response => response.json())
+        .then(daten => {
+          const tbody = document.querySelector('#depot-tabelle tbody');
+          tbody.innerHTML = '';
+
+          daten.forEach(eintrag => {
+            const zeile = document.createElement('tr');
+
+            function farbklasse(wert) {
+              return (typeof wert === 'number' && wert < 0) ? 'negative'
+                   : (typeof wert === 'number' && wert > 0) ? 'positive'
+                   : '';
+            }
+
+            function format(wert) {
+              return (typeof wert === 'number') ? wert.toFixed(2) : wert;
+            }
+
+            zeile.innerHTML = `
+              <td>${eintrag.WKN}</td>
+              <td>${format(eintrag["Aktueller Preis"])}</td>
+              <td class="${farbklasse(eintrag.Kursdiff)}">${format(eintrag.Kursdiff)}</td>
+              <td class="${farbklasse(eintrag["Kursdiff (%)"])}">${format(eintrag["Kursdiff (%)"])}%</td>
+              <td class="${farbklasse(eintrag["Wertdiff (€)"])}">${format(eintrag["Wertdiff (€)"])}</td>
+            `;
+
+            tbody.appendChild(zeile);
+          });
+        });
+    }
+
+    setInterval(ladeDepotdaten, 10 * 60 * 1000); // alle 10 Minuten
+    ladeDepotdaten();
+  </script>
+</body>
+</html>

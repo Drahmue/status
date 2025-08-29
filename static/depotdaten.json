@@ -1,0 +1,72 @@
+[
+  {
+    "Name":"iShares € Aggregate Bond UCITS ETF EUR (Dist)",
+    "Aktueller Preis":108.5,
+    "Kursdiff":0.12,
+    "Kursdiff (%)":0.11,
+    "Wertdiff (€)":24.0
+  },
+  {
+    "Name":"ISHSIII-CORE MSCI WLD DLA",
+    "Aktueller Preis":101.93,
+    "Kursdiff":-3.06,
+    "Kursdiff (%)":-2.91,
+    "Wertdiff (€)":-21671.94
+  },
+  {
+    "Name":"Xetra-Gold",
+    "Aktueller Preis":93.36,
+    "Kursdiff":0.69,
+    "Kursdiff (%)":0.74,
+    "Wertdiff (€)":1147.38
+  },
+  {
+    "Name":"Xtrackers MSCI Emerging Markets",
+    "Aktueller Preis":56.78,
+    "Kursdiff":-1.23,
+    "Kursdiff (%)":-2.12,
+    "Wertdiff (€)":-1843.6
+  },
+  {
+    "Name":"Vanguard FTSE Developed Europe",
+    "Aktueller Preis":41.24,
+    "Kursdiff":-0.95,
+    "Kursdiff (%)":-2.26,
+    "Wertdiff (€)":-2083.15
+  },
+  {
+    "Name":"Xtrackers II Global Government Bond",
+    "Aktueller Preis":175.82,
+    "Kursdiff":0.49,
+    "Kursdiff (%)":0.28,
+    "Wertdiff (€)":248.81
+  },
+  {
+    "Name":"BASF",
+    "Aktueller Preis":41.98,
+    "Kursdiff":-1.18,
+    "Kursdiff (%)":-2.73,
+    "Wertdiff (€)":-1644.92
+  },
+  {
+    "Name":"Muenchener Rueckv",
+    "Aktueller Preis":566.4,
+    "Kursdiff":-9.2,
+    "Kursdiff (%)":-1.6,
+    "Wertdiff (€)":-552.0
+  },
+  {
+    "Name":"Bitcoin in Euro",
+    "Aktueller Preis":98769.1,
+    "Kursdiff":-4336.84,
+    "Kursdiff (%)":-4.21,
+    "Wertdiff (€)":-228.2
+  },
+  {
+    "Name":"SUMME",
+    "Aktueller Preis":"",
+    "Kursdiff":"",
+    "Kursdiff (%)":"",
+    "Wertdiff (€)":-26603.62
+  }
+]
