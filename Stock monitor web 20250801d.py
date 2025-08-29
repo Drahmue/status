@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 import importlib
-import holidays
+from holidays.countries.germany import Germany
 import time
 import pandas as pd
 import yfinance as yf
@@ -38,7 +38,13 @@ sys.path.insert(0, standard_library_path)
 try:
     import Standardfunktionen_aktuell
     importlib.reload(Standardfunktionen_aktuell)
-    from Standardfunktionen_aktuell import *
+    from Standardfunktionen_aktuell import (
+        screen_and_log,
+        set_working_directory,
+        settings_import,
+        files_availability_check,
+        import_parquet
+    )
     print(f"Import der Bibliothek: {library_name} von {standard_library_path} erfolgreich")
 except ImportError as e:
     sys.exit(f"Fehler beim Import der Bibliothek: {e}")
@@ -157,7 +163,7 @@ def prices_update(prices, instruments, logfile, screen=True):
     last_date = prices.index.get_level_values('date').max()
 
     # Deutsche Feiertage
-    de_holidays = holidays.Germany()
+    de_holidays = Germany()
 
     # Datumsbereich: alle Kalendertage zwischen letztem Kursdatum und gestern
     all_dates = pd.date_range(start=last_date + timedelta(days=1), end=yesterday)
@@ -198,7 +204,7 @@ def prices_update(prices, instruments, logfile, screen=True):
                     auto_adjust=False
                 )
 
-                if data.empty:
+                if data is None or data.empty:
                     screen_and_log(
                         f"WARNING: Keine Daten für Ticker {ticker} im Zeitraum {missing_dates[0].date()} bis {missing_dates[-1].date()}",
                         logfile, screen=screen
@@ -206,14 +212,24 @@ def prices_update(prices, instruments, logfile, screen=True):
                     continue
 
                 # Stelle sicher, dass der Index normiert ist
-                data.index = data.index.normalize()
+                if data is not None and hasattr(data, 'index'):
+                    try:
+                        # Normalize the index by flooring to daily frequency
+                        data.index = data.index.floor('D')
+                    except Exception as e:
+                        screen_and_log(
+                            f"WARNING: Fehler bei der Index-Normalisierung für {ticker}: {e}",
+                            logfile, screen=screen
+                        )
+                        continue
 
                 for date in missing_dates:
                     normalized_date = pd.Timestamp(date).normalize()
 
                     try:
                         # Versuche Zugriff auf 'Close'-Wert
-                        close_entry = data.loc[normalized_date, 'Close']
+                        if data is not None and hasattr(data, 'loc'):
+                            close_entry = data.loc[normalized_date, 'Close']
 
                         # Falls Series: z. B. durch mehrdimensionale Struktur
                         if isinstance(close_entry, pd.Series):
@@ -607,9 +623,11 @@ def get_current_prices(instruments_df):
 
         try:
             data = yf.download(ticker, period="1d", interval="1m", progress=False, auto_adjust=False)
-            if not data.empty:
-                last_valid_price = float(data["Close"].dropna().iloc[-1].item())
-                prices[wkn] = last_valid_price
+            if data is not None and not data.empty and "Close" in data.columns:
+                close_data = data["Close"]
+                if not close_data.empty:
+                    last_valid_price = float(close_data.dropna().iloc[-1].item())
+                    prices[wkn] = last_valid_price
         except Exception as e:
             print(f"Fehler beim Abrufen von {ticker} für WKN {wkn}: {e}")
     return prices
@@ -667,18 +685,38 @@ def run_monitor(instruments_df, values_yesterday, shares_yesterday):
 
 def main():
     settings = initializing("kursabfrage_settings.ini", screen=False)
-    logfile = settings["Files"]["logfile"]
-    screen = settings["Output"]["screen"]
+    if settings is None:
+        print("Error: Could not initialize settings")
+        return
+        
+    logfile = settings.get("Files", {}).get("logfile")
+    screen = settings.get("Output", {}).get("screen", True)  # Default to True if not found
 
     instruments_df = instruments_import_and_process(settings, logfile, screen=screen)
     prices_df = prices_import_and_process(settings, instruments_df, logfile, screen=screen)
     bookings_df = bookings_import_and_process(settings, instruments_df, logfile, screen=screen)
 
+    if prices_df is None or not hasattr(prices_df, 'index'):
+        print("Error: No valid price data available")
+        return
+        
     end_date = prices_df.index.get_level_values("date").max()
-    shares_day_banks_df = shares_from_bookings(bookings_df, end_date, logfile, screen=screen)
-    values_day_banks_df = values_from_shares_and_prices(shares_day_banks_df, prices_df)
-    values_day_df = aggregate_banks(values_day_banks_df)
-    shares_day_df = aggregate_banks(shares_day_banks_df)
+    if bookings_df is not None:
+        shares_day_banks_df = shares_from_bookings(bookings_df, end_date, logfile, screen=screen)
+        if shares_day_banks_df is not None:
+            values_day_banks_df = values_from_shares_and_prices(shares_day_banks_df, prices_df)
+            if values_day_banks_df is not None:
+                values_day_df = aggregate_banks(values_day_banks_df)
+                shares_day_df = aggregate_banks(shares_day_banks_df)
+            else:
+                print("Error: Could not calculate values from shares and prices")
+                return
+        else:
+            print("Error: Could not process bookings data")
+            return
+    else:
+        print("Error: No valid bookings data available")
+        return
 
     yesterday = get_yesterday()
     values_yesterday = values_day_df.loc[yesterday]
