@@ -1,0 +1,35 @@
+# Log files
+status.log
+kursabfrage_file_log.txt
+
+# Data files (generated/updated automatically)
+static/depotdaten.json
+prices.parquet
+
+# Configuration files with sensitive data
+# Uncomment if these contain sensitive information
+# status.ini
+
+# Temporary files
+*.tmp
+*.temp
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.so
+.pytest_cache/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
