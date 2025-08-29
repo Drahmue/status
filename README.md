@@ -14,10 +14,10 @@ A Flask-based web application for monitoring stock portfolio performance with re
 
 ```
 ├── app.py                          # Flask web application
-├── Stock monitor web 20250801d.py  # Main stock monitoring script
-├── kursabfrage_settings.ini        # Configuration settings
+├── status.py                       # Main stock monitoring script
+├── status.ini                      # Configuration settings
 ├── prices.parquet                  # Historical price data
-├── kursabfrage_file_log.txt        # Application logs
+├── status.log                      # Application logs
 ├── static/
 │   ├── depotdaten.json            # Real-time portfolio data
 │   ├── speedtest.json             # Network performance data
@@ -48,12 +48,12 @@ Access the web interface at `http://localhost:5000`
 
 ### Stock Monitor
 ```bash
-python "Stock monitor web 20250801d.py"
+python status.py
 ```
 
 ## Configuration
 
-Edit `kursabfrage_settings.ini` to configure:
+Edit `status.ini` to configure:
 - File paths for instruments, bookings, and price data
 - Logging settings
 - Output preferences
