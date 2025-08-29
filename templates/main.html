@@ -40,6 +40,7 @@
 <body>
   <p>hello {{person}}</p>
   <div id="uhrzeit"></div>
+  <div id="reference-date" style="font-size: 0.6em; color: #666; margin-top: 1em;"></div>
 
   <script>
     function aktuelleZeitAnzeigen() {
@@ -62,6 +63,9 @@
         <th>Kursdiff</th>
         <th>Kursdiff (%)</th>
         <th>Wertdiff (€)</th>
+        <th>Kursdiff Monat</th>
+        <th>Kursdiff Monat (%)</th>
+        <th>Wertdiff Monat (€)</th>
       </tr>
     </thead>
     <tbody id="table-body"></tbody>
@@ -71,11 +75,19 @@
     function ladeDepotdaten() {
       fetch('/static/depotdaten.json?t=' + new Date().getTime())
         .then(response => response.json())
-        .then(daten => {
+        .then(result => {
+          // Update reference date display
+          const referenceDateDiv = document.getElementById('reference-date');
+          let referenceText = `Kursdifferenz bezogen auf Schlusskurs vom: ${result.reference_date}`;
+          if (result.reference_date_month && result.reference_date_month !== "") {
+            referenceText += ` | Monatliche Kursdifferenz bezogen auf: ${result.reference_date_month}`;
+          }
+          referenceDateDiv.textContent = referenceText;
+          
           const tbody = document.querySelector('#depot-tabelle tbody');
           tbody.innerHTML = '';
 
-          daten.forEach(eintrag => {
+          result.data.forEach(eintrag => {
             const zeile = document.createElement('tr');
 
             function farbklasse(wert) {
@@ -94,6 +106,9 @@
               <td class="${farbklasse(eintrag.Kursdiff)}">${format(eintrag.Kursdiff)}</td>
               <td class="${farbklasse(eintrag["Kursdiff (%)"])}">${format(eintrag["Kursdiff (%)"])}%</td>
               <td class="${farbklasse(eintrag["Wertdiff (€)"])}">${format(eintrag["Wertdiff (€)"])}</td>
+              <td class="${farbklasse(eintrag["Kursdiff Monat"])}">${format(eintrag["Kursdiff Monat"])}</td>
+              <td class="${farbklasse(eintrag["Kursdiff Monat (%)"])}">${format(eintrag["Kursdiff Monat (%)"])}%</td>
+              <td class="${farbklasse(eintrag["Wertdiff Monat (€)"])}">${format(eintrag["Wertdiff Monat (€)"])}</td>
             `;
 
             tbody.appendChild(zeile);

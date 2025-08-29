@@ -609,6 +609,46 @@ def get_yesterday():
     yesterday = today - timedelta(days=1)
     return pd.Timestamp(yesterday)
 
+def get_last_trading_day(prices_df):
+    """
+    Returns the last available trading day from the price data.
+    This accounts for weekends and holidays automatically.
+    
+    Parameter:
+        prices_df (DataFrame): DataFrame with price data containing date index
+        
+    Returns:
+        pd.Timestamp: The most recent trading day with available data
+    """
+    return prices_df.index.get_level_values('date').max()
+
+def get_last_trading_day_of_previous_month(prices_df):
+    """
+    Returns the last available trading day of the previous month from the price data.
+    
+    Parameter:
+        prices_df (DataFrame): DataFrame with price data containing date index
+        
+    Returns:
+        pd.Timestamp: The last trading day of the previous month, or None if not available
+    """
+    today = datetime.today().date()
+    
+    # Get first day of current month
+    first_day_current_month = today.replace(day=1)
+    
+    # Get last day of previous month
+    last_day_previous_month = first_day_current_month - timedelta(days=1)
+    
+    # Get all available dates and filter for previous month or earlier
+    all_dates = prices_df.index.get_level_values('date')
+    previous_month_dates = all_dates[all_dates <= pd.Timestamp(last_day_previous_month)]
+    
+    if previous_month_dates.empty:
+        return None
+    
+    return previous_month_dates.max()
+
 def get_current_prices(instruments_df):
     prices = {}
     for wkn, row in instruments_df.iterrows():
@@ -632,7 +672,8 @@ def get_current_prices(instruments_df):
             print(f"Fehler beim Abrufen von {ticker} für WKN {wkn}: {e}")
     return prices
 
-def run_monitor(instruments_df, values_yesterday, shares_yesterday):
+def run_monitor(instruments_df, values_yesterday, shares_yesterday, reference_date, 
+                values_last_month, shares_last_month, reference_date_month):
     while True:
         print(f"[{datetime.now().strftime('%H:%M:%S')}] Starte Kursabfrage...")
         current_prices = get_current_prices(instruments_df)
@@ -649,13 +690,31 @@ def run_monitor(instruments_df, values_yesterday, shares_yesterday):
                         percent_price = (diff_price / price_yest) * 100
                         diff_value = diff_price * share_yest
 
+                        # Calculate monthly differences if available
+                        diff_price_month = ""
+                        percent_price_month = ""
+                        diff_value_month = ""
+                        
+                        if (values_last_month is not None and shares_last_month is not None 
+                            and wkn in values_last_month.index and wkn in shares_last_month.index):
+                            value_last_month = values_last_month.loc[wkn, 'value']
+                            share_last_month = shares_last_month.loc[wkn, 'share']
+                            if pd.notna(share_last_month) and share_last_month > 0 and pd.notna(value_last_month) and value_last_month > 0:
+                                price_last_month = value_last_month / share_last_month
+                                diff_price_month = round(price_today - price_last_month, 2)
+                                percent_price_month = round(((price_today - price_last_month) / price_last_month) * 100, 2)
+                                diff_value_month = round((price_today - price_last_month) * share_yest, 2)
+
                         instrument_name = instruments_df.loc[wkn, "instrument_name"] if wkn in instruments_df.index else wkn
                         output_rows.append({
                             "Name": instrument_name,
                             "Aktueller Preis": round(price_today, 2),
                             "Kursdiff": round(diff_price, 2),
                             "Kursdiff (%)": round(percent_price, 2),
-                            "Wertdiff (€)": round(diff_value, 2)
+                            "Wertdiff (€)": round(diff_value, 2),
+                            "Kursdiff Monat": diff_price_month,
+                            "Kursdiff Monat (%)": percent_price_month,
+                            "Wertdiff Monat (€)": diff_value_month
                         })
 
                 # keine else-Verzweigung – keine Ausgabe bei share=0 oder value=0
@@ -667,15 +726,41 @@ def run_monitor(instruments_df, values_yesterday, shares_yesterday):
         # Summenzeile hinzufügen
         if not df_out.empty:
             gesamtwertdiff = df_out["Wertdiff (€)"].sum()
+            
+            # Calculate monthly total if available
+            gesamtwertdiff_month = ""
+            if "Wertdiff Monat (€)" in df_out.columns:
+                monthly_values = df_out["Wertdiff Monat (€)"]
+                # Only sum numeric values, ignore empty strings
+                numeric_monthly = [val for val in monthly_values if isinstance(val, (int, float))]
+                if numeric_monthly:
+                    gesamtwertdiff_month = round(sum(numeric_monthly), 2)
+            
             df_out.loc[len(df_out.index)] = {
                 "Name": "SUMME",
                 "Aktueller Preis": "",
                 "Kursdiff": "",
                 "Kursdiff (%)": "",
-                "Wertdiff (€)": round(gesamtwertdiff, 2)
+                "Wertdiff (€)": round(gesamtwertdiff, 2),
+                "Kursdiff Monat": "",
+                "Kursdiff Monat (%)": "",
+                "Wertdiff Monat (€)": gesamtwertdiff_month
             }
 
-        df_out.to_json("static/depotdaten.json", orient="records", force_ascii=False, indent=2)
+        # Create final JSON structure with reference dates
+        json_data = {
+            "reference_date": reference_date.strftime('%d.%m.%Y'),
+            "reference_date_month": reference_date_month.strftime('%d.%m.%Y') if reference_date_month is not None else "",
+            "data": df_out.to_dict('records')
+        }
+        
+        import json
+        with open("static/depotdaten.json", 'w', encoding='utf-8') as f:
+            json.dump(json_data, f, ensure_ascii=False, indent=2)
+        
+        print(f"Kursdifferenz bezogen auf Schlusskurs vom: {reference_date.strftime('%d.%m.%Y')}")
+        if reference_date_month is not None:
+            print(f"Monatliche Kursdifferenz bezogen auf Schlusskurs vom: {reference_date_month.strftime('%d.%m.%Y')}")
         print(df_out.to_string(index=False))
 
 
@@ -718,11 +803,21 @@ def main():
         print("Error: No valid bookings data available")
         return
 
-    yesterday = get_yesterday()
-    values_yesterday = values_day_df.loc[yesterday]
-    shares_yesterday = shares_day_df.loc[yesterday]
+    last_trading_day = get_last_trading_day(prices_df)
+    values_last_day = values_day_df.loc[last_trading_day]
+    shares_last_day = shares_day_df.loc[last_trading_day]
 
-    run_monitor(instruments_df, values_yesterday, shares_yesterday)
+    # Get monthly reference data
+    last_trading_day_prev_month = get_last_trading_day_of_previous_month(prices_df)
+    if last_trading_day_prev_month is not None:
+        values_last_month = values_day_df.loc[last_trading_day_prev_month]
+        shares_last_month = shares_day_df.loc[last_trading_day_prev_month]
+    else:
+        values_last_month = None
+        shares_last_month = None
+
+    run_monitor(instruments_df, values_last_day, shares_last_day, last_trading_day, 
+                values_last_month, shares_last_month, last_trading_day_prev_month)
 
 if __name__ == "__main__":
     main()
