@@ -384,7 +384,7 @@ def get_last_trading_day_of_previous_month():
     return None
 
 
-def run_monitor(instruments_df, shares_yesterday, reference_date, logfile, reference_date_month=None):
+def run_monitor(instruments_df, shares_yesterday, reference_date, logfile, settings, reference_date_month=None):
     """Hauptschleife für das Monitoring"""
     while True:
         print(f"[{datetime.now().strftime('%H:%M:%S')}] Starte Kursabfrage...")
@@ -476,9 +476,9 @@ def run_monitor(instruments_df, shares_yesterday, reference_date, logfile, refer
             print(f"Monatliche Kursdifferenz bezogen auf Schlusskurs vom: {reference_date_month.strftime('%d.%m.%Y')}")
         print(df_out.to_string(index=False))
 
-        intervall = 10  # 10 Sekunden für Tests, später auf 600 (10 Minuten) ändern
-        print(f"→ Daten aktualisiert. Nächste Abfrage in {intervall} Sekunden.")
-        time.sleep(intervall)
+        refresh_time = settings.get("Timing", {}).get("refresh_time", 600)
+        print(f"→ Daten aktualisiert. Nächste Abfrage in {refresh_time} Sekunden.")
+        time.sleep(refresh_time)
 
 
 def main():
@@ -525,7 +525,7 @@ def main():
         print(f"Monatliches Referenzdatum: {last_trading_day_prev_month.strftime('%d.%m.%Y')}")
 
     # Starte Monitoring
-    run_monitor(instruments_df, shares_yesterday, last_trading_day, logfile,
+    run_monitor(instruments_df, shares_yesterday, last_trading_day, logfile, settings,
                 reference_date_month=last_trading_day_prev_month)
 
 
