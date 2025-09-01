@@ -1,6 +1,5 @@
 import pandas as pd
 import yfinance as yf
-import numpy as np
 import os
 import sys
 from datetime import datetime, timedelta
@@ -385,8 +384,7 @@ def get_last_trading_day_of_previous_month():
     return None
 
 
-def run_monitor(instruments_df, shares_yesterday, reference_date, logfile,
-                values_last_month=None, shares_last_month=None, reference_date_month=None):
+def run_monitor(instruments_df, shares_yesterday, reference_date, logfile, reference_date_month=None):
     """Hauptschleife für das Monitoring"""
     while True:
         print(f"[{datetime.now().strftime('%H:%M:%S')}] Starte Kursabfrage...")
