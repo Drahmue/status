@@ -180,19 +180,17 @@
           return response.json();
         })
         .then(data => {
-          // Update download speed (convert from bps to Mbps)
-          const downloadMbps = (data.download.bandwidth * 8 / 1000000).toFixed(1);
-          document.getElementById('download-speed').textContent = downloadMbps;
+          // Update download speed (already in Mbps)
+          document.getElementById('download-speed').textContent = data.download_mbps.toFixed(1);
           
-          // Update upload speed (convert from bps to Mbps)
-          const uploadMbps = (data.upload.bandwidth * 8 / 1000000).toFixed(1);
-          document.getElementById('upload-speed').textContent = uploadMbps;
+          // Update upload speed (already in Mbps)  
+          document.getElementById('upload-speed').textContent = data.upload_mbps.toFixed(1);
           
-          // Update ping latency
-          document.getElementById('ping-latency').textContent = data.ping.latency.toFixed(1);
+          // Update ping latency (already in ms)
+          document.getElementById('ping-latency').textContent = data.ping_ms.toFixed(1);
           
           // Update server info
-          const serverInfo = data.server.name.split(' – ')[0]; // Take only the first part
+          const serverInfo = data.server_name + ', ' + data.server_location.split(',')[0];
           document.getElementById('server-info').textContent = serverInfo;
           
           // Update last updated time
