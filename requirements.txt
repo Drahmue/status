@@ -5,3 +5,4 @@ numpy
 holidays
 openpyxl
 speedtest-cli
+pyarrow

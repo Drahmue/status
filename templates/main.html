@@ -35,6 +35,30 @@
     .positive {
       color: green;
     }
+
+    #speedtest-section {
+      margin-top: 3em;
+      border: 1px solid #ddd;
+      padding: 1em;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+    }
+
+    .speedtest-data {
+      font-size: 0.8em;
+      display: inline-block;
+      margin: 0.5em 1em;
+      text-align: center;
+    }
+
+    .speedtest-value {
+      font-weight: bold;
+      font-size: 1.2em;
+    }
+
+    .speedtest-unit {
+      color: #666;
+    }
   </style>
 </head>
 <body>
@@ -70,6 +94,32 @@
     </thead>
     <tbody id="table-body"></tbody>
   </table>
+
+  <div id="speedtest-section">
+    <h3 style="margin-top: 0;">DSL Speedtest</h3>
+    <div id="speedtest-data">
+      <div class="speedtest-data">
+        <div>Download</div>
+        <div class="speedtest-value" id="download-speed">--</div>
+        <div class="speedtest-unit">Mbps</div>
+      </div>
+      <div class="speedtest-data">
+        <div>Upload</div>
+        <div class="speedtest-value" id="upload-speed">--</div>
+        <div class="speedtest-unit">Mbps</div>
+      </div>
+      <div class="speedtest-data">
+        <div>Ping</div>
+        <div class="speedtest-value" id="ping-latency">--</div>
+        <div class="speedtest-unit">ms</div>
+      </div>
+      <div class="speedtest-data">
+        <div>Server</div>
+        <div class="speedtest-value" id="server-info">--</div>
+        <div class="speedtest-unit" id="last-updated">--</div>
+      </div>
+    </div>
+  </div>
 
   <script>
     function ladeDepotdaten() {
@@ -118,6 +168,51 @@
 
     setInterval(ladeDepotdaten, 10 * 1000); // alle 10 Sekunden
     ladeDepotdaten();
+  </script>
+
+  <script>
+    function ladeSpeedtestDaten() {
+      fetch('/static/speedtest.json?t=' + new Date().getTime())
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Speedtest data not available');
+          }
+          return response.json();
+        })
+        .then(data => {
+          // Update download speed (convert from bps to Mbps)
+          const downloadMbps = (data.download.bandwidth * 8 / 1000000).toFixed(1);
+          document.getElementById('download-speed').textContent = downloadMbps;
+          
+          // Update upload speed (convert from bps to Mbps)
+          const uploadMbps = (data.upload.bandwidth * 8 / 1000000).toFixed(1);
+          document.getElementById('upload-speed').textContent = uploadMbps;
+          
+          // Update ping latency
+          document.getElementById('ping-latency').textContent = data.ping.latency.toFixed(1);
+          
+          // Update server info
+          const serverInfo = data.server.name.split(' – ')[0]; // Take only the first part
+          document.getElementById('server-info').textContent = serverInfo;
+          
+          // Update last updated time
+          const timestamp = new Date(data.timestamp);
+          const timeString = timestamp.toLocaleTimeString('de-DE');
+          document.getElementById('last-updated').textContent = timeString;
+        })
+        .catch(error => {
+          console.log('Speedtest data not available:', error);
+          document.getElementById('download-speed').textContent = '--';
+          document.getElementById('upload-speed').textContent = '--';
+          document.getElementById('ping-latency').textContent = '--';
+          document.getElementById('server-info').textContent = 'Nicht verfügbar';
+          document.getElementById('last-updated').textContent = '--';
+        });
+    }
+
+    // Load speedtest data every 30 seconds (less frequent than stock data)
+    setInterval(ladeSpeedtestDaten, 30 * 1000);
+    ladeSpeedtestDaten();
   </script>
 </body>
 </html>
