@@ -1,0 +1,9 @@
+@echo off
+REM DSL Speedtest Monitoring Service Starter  
+REM Task 3 - Start status_dsl.py
+
+cd /d "D:\Dataserver\_Batchprozesse\status"
+python status_dsl.py
+
+REM Keep window open if there's an error
+if errorlevel 1 pause
