@@ -2,7 +2,7 @@
 # Run as Administrator
 
 param(
-    [string]$ServiceAccount = "Service",
+    [string]$ServiceAccount = "WIN-H7BKO5H0RMC\Service",
     [string]$BasePath = "D:\Dataserver\_Batchprozesse\status"
 )
 
@@ -26,7 +26,7 @@ try {
     $Action1 = New-ScheduledTaskAction -Execute "$BasePath\start_app.bat" -WorkingDirectory $BasePath
     $Trigger1 = New-ScheduledTaskTrigger -AtStartup
     $Principal1 = New-ScheduledTaskPrincipal -UserId $ServiceAccount -LogonType ServiceAccount -RunLevel Highest
-    $Settings1 = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -WakeToRun -DontStopOnIdleEnd -RestartOnIdle -ExecutionTimeLimit (New-TimeSpan -Hours 0)
+    $Settings1 = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -WakeToRun -DontStopOnIdleEnd -RestartOnIdle -ExecutionTimeLimit (New-TimeSpan -Hours 0) -StartWhenAvailable -Compatibility Win8
     
     $Task1 = New-ScheduledTask -Action $Action1 -Trigger $Trigger1 -Principal $Principal1 -Settings $Settings1 -Description "Flask web application for stock monitoring dashboard"
     
@@ -40,7 +40,7 @@ try {
     $Trigger2 = New-ScheduledTaskTrigger -AtStartup
     $Trigger2.Delay = "PT2M"  # 2 minute delay
     $Principal2 = New-ScheduledTaskPrincipal -UserId $ServiceAccount -LogonType ServiceAccount -RunLevel Highest
-    $Settings2 = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -WakeToRun -DontStopOnIdleEnd -RestartOnIdle -ExecutionTimeLimit (New-TimeSpan -Hours 0)
+    $Settings2 = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -WakeToRun -DontStopOnIdleEnd -RestartOnIdle -ExecutionTimeLimit (New-TimeSpan -Hours 0) -StartWhenAvailable -Compatibility Win8
     
     $Task2 = New-ScheduledTask -Action $Action2 -Trigger $Trigger2 -Principal $Principal2 -Settings $Settings2 -Description "Stock price monitoring and portfolio tracking"
     
@@ -54,7 +54,7 @@ try {
     $Trigger3 = New-ScheduledTaskTrigger -AtStartup
     $Trigger3.Delay = "PT3M"  # 3 minute delay
     $Principal3 = New-ScheduledTaskPrincipal -UserId $ServiceAccount -LogonType ServiceAccount -RunLevel Highest
-    $Settings3 = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -WakeToRun -DontStopOnIdleEnd -RestartOnIdle -ExecutionTimeLimit (New-TimeSpan -Hours 0)
+    $Settings3 = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -WakeToRun -DontStopOnIdleEnd -RestartOnIdle -ExecutionTimeLimit (New-TimeSpan -Hours 0) -StartWhenAvailable -Compatibility Win8
     
     $Task3 = New-ScheduledTask -Action $Action3 -Trigger $Trigger3 -Principal $Principal3 -Settings $Settings3 -Description "DSL speedtest monitoring and data collection"
     
