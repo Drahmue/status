@@ -4,3 +4,4 @@ yfinance
 numpy
 holidays
 openpyxl
+speedtest-cli

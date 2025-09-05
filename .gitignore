@@ -1,10 +1,14 @@
 # Log files
 status.log
 kursabfrage_file_log.txt
+status_dsl.log
+dsl_speedtest_viewer.log
 
 # Data files (generated/updated automatically)
 static/depotdaten.json
+static/speedtest.json
 prices.parquet
+speedtest_data.parquet
 
 # Configuration files with sensitive data
 # Uncomment if these contain sensitive information
