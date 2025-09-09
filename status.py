@@ -384,14 +384,38 @@ def get_last_trading_day_of_previous_month():
     return None
 
 
-def run_monitor(instruments_df, shares_yesterday, reference_date, logfile, settings, reference_date_month=None):
+def run_monitor(instruments_df, shares_day_df, shares_yesterday, reference_date, logfile, settings, reference_date_month=None):
     """Hauptschleife für das Monitoring"""
+    current_last_trading_day = reference_date
+    current_last_trading_day_month = reference_date_month
+    current_shares_yesterday = shares_yesterday
+    
     while True:
+        # Prüfe, ob sich der letzte Handelstag geändert hat
+        new_last_trading_day = get_last_trading_day()
+        new_last_trading_day_month = get_last_trading_day_of_previous_month()
+        
+        if new_last_trading_day != current_last_trading_day:
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] Neuer Handelstag erkannt: {new_last_trading_day.strftime('%d.%m.%Y')}")
+            current_last_trading_day = new_last_trading_day
+            current_shares_yesterday = shares_day_df.loc[current_last_trading_day] if current_last_trading_day in shares_day_df.index else None
+            
+            if current_shares_yesterday is None:
+                screen_and_log(f"ERROR: Keine Shares-Daten für neuen Handelstag {current_last_trading_day.strftime('%d.%m.%Y')} verfügbar", logfile)
+                print(f"Fehler: Keine Daten für {current_last_trading_day.strftime('%d.%m.%Y')} verfügbar. Verwende alte Daten.")
+            else:
+                screen_and_log(f"Info: Referenzdaten für neuen Handelstag {current_last_trading_day.strftime('%d.%m.%Y')} aktualisiert", logfile)
+        
+        if new_last_trading_day_month != current_last_trading_day_month:
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] Neuer monatlicher Referenztag: {new_last_trading_day_month.strftime('%d.%m.%Y') if new_last_trading_day_month else 'None'}")
+            current_last_trading_day_month = new_last_trading_day_month
+            screen_and_log(f"Info: Monatlicher Referenztag aktualisiert auf {current_last_trading_day_month.strftime('%d.%m.%Y') if current_last_trading_day_month else 'None'}", logfile)
+        
         print(f"[{datetime.now().strftime('%H:%M:%S')}] Starte Kursabfrage...")
         current_prices = get_current_prices(instruments_df)
         
-        # Hole Referenzdaten direkt von yfinance
-        reference_data = get_reference_values_from_yfinance(instruments_df, shares_yesterday, reference_date, logfile)
+        # Hole Referenzdaten direkt von yfinance mit aktuellen Referenzdaten
+        reference_data = get_reference_values_from_yfinance(instruments_df, current_shares_yesterday, current_last_trading_day, logfile)
         
         output_rows = []
 
@@ -412,9 +436,9 @@ def run_monitor(instruments_df, shares_yesterday, reference_date, logfile, setti
                         percent_price_month = ""
                         diff_value_month = ""
                         
-                        if reference_date_month is not None:
+                        if current_last_trading_day_month is not None:
                             monthly_ref_data = get_reference_values_from_yfinance(
-                                instruments_df, shares_yesterday, reference_date_month, logfile)
+                                instruments_df, current_shares_yesterday, current_last_trading_day_month, logfile)
                             
                             if wkn in monthly_ref_data:
                                 price_last_month = monthly_ref_data[wkn]['price']
@@ -463,17 +487,17 @@ def run_monitor(instruments_df, shares_yesterday, reference_date, logfile, setti
 
         # JSON-Struktur mit Referenzdaten erstellen
         json_data = {
-            "reference_date": reference_date.strftime('%d.%m.%Y'),
-            "reference_date_month": reference_date_month.strftime('%d.%m.%Y') if reference_date_month is not None else "",
+            "reference_date": current_last_trading_day.strftime('%d.%m.%Y'),
+            "reference_date_month": current_last_trading_day_month.strftime('%d.%m.%Y') if current_last_trading_day_month is not None else "",
             "data": df_out.to_dict('records')
         }
         
         with open("static/depotdaten.json", 'w', encoding='utf-8') as f:
             json.dump(json_data, f, ensure_ascii=False, indent=2)
         
-        print(f"Kursdifferenz bezogen auf Schlusskurs vom: {reference_date.strftime('%d.%m.%Y')}")
-        if reference_date_month is not None:
-            print(f"Monatliche Kursdifferenz bezogen auf Schlusskurs vom: {reference_date_month.strftime('%d.%m.%Y')}")
+        print(f"Kursdifferenz bezogen auf Schlusskurs vom: {current_last_trading_day.strftime('%d.%m.%Y')}")
+        if current_last_trading_day_month is not None:
+            print(f"Monatliche Kursdifferenz bezogen auf Schlusskurs vom: {current_last_trading_day_month.strftime('%d.%m.%Y')}")
         print(df_out.to_string(index=False))
 
         refresh_time = settings.get("Timing", {}).get("refresh_time", 600)
@@ -525,7 +549,7 @@ def main():
         print(f"Monatliches Referenzdatum: {last_trading_day_prev_month.strftime('%d.%m.%Y')}")
 
     # Starte Monitoring
-    run_monitor(instruments_df, shares_yesterday, last_trading_day, logfile, settings,
+    run_monitor(instruments_df, shares_day_df, shares_yesterday, last_trading_day, logfile, settings,
                 reference_date_month=last_trading_day_prev_month)
 
 
