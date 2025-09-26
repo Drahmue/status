@@ -522,8 +522,8 @@ def main():
         print("Error: Could not load required data")
         return
 
-    # Bestimme das Ende der Buchungsdaten (heute)
-    end_date = pd.Timestamp(datetime.today().date())
+    # Bestimme das Ende der Buchungsdaten (heute + 30 Tage für zukünftige Handelstage)
+    end_date = pd.Timestamp(datetime.today().date()) + timedelta(days=30)
     
     # Erstelle Shares-DataFrame
     shares_day_banks_df = shares_from_bookings(bookings_df, end_date, logfile, screen=screen)
