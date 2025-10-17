@@ -3,42 +3,40 @@ import yfinance as yf
 import os
 import sys
 from datetime import datetime, timedelta
-import importlib
 from holidays.countries.germany import Germany
 import time
 import json
 
-# ALLGEMEINE FUNKTIONEN
+# Import ahlib functions
+from ahlib import (
+    create_extended_logger,
+    set_working_directory,
+    settings_import,
+    files_availability_check
+)
 
-# Standardbiblithek einbinden
-standard_library_path = r"\\WIN-H7BKO5H0RMC\Dataserver\Programmier Projekte\Python\Standardbibliothek"
-library_name = "Standardfunktionen_aktuell.py"
+# Global logger instance
+logger = None
 
-# Sicherstellen, dass der Pfad existiert
-if not os.path.exists(standard_library_path):
-    sys.exit(f"Fehler: Der Pfad '{standard_library_path}' existiert nicht. Bitte überprüfe die Eingabe.")
 
-# Sicherstellen, dass die Bibliothek existiert
-library_full_path = os.path.join(standard_library_path, library_name)
-if not os.path.isfile(library_full_path):
-    sys.exit(f"Fehler: Die Bibliothek '{library_name}' wurde im Pfad '{standard_library_path}' nicht gefunden.")
+def screen_and_log(message, logfile=None, screen=True):
+    """
+    Wrapper function for logging that mimics the old screen_and_log behavior.
+    Uses the global logger if available, otherwise prints to screen.
+    """
+    global logger
 
-# Pfad zum Suchpfad hinzufügen
-sys.path.insert(0, standard_library_path)
-
-# Bibliothek importieren
-try:
-    import Standardfunktionen_aktuell
-    importlib.reload(Standardfunktionen_aktuell)
-    from Standardfunktionen_aktuell import (
-        screen_and_log,
-        set_working_directory,
-        settings_import,
-        files_availability_check
-    )
-    print(f"Import der Bibliothek: {library_name} von {standard_library_path} erfolgreich")
-except ImportError as e:
-    sys.exit(f"Fehler beim Import der Bibliothek: {e}")
+    if logger is not None:
+        # Use the ExtendedLogger
+        if message.startswith("ERROR:"):
+            logger.error(message.replace("ERROR: ", ""))
+        elif message.startswith("WARNING:"):
+            logger.warning(message.replace("WARNING: ", ""))
+        else:
+            logger.info(message.replace("Info: ", ""))
+    elif screen:
+        # Fallback to print if logger not initialized
+        print(message)
 
 
 def function_result(function_name, error_count, warning_count, logfile, screen=True):
@@ -237,32 +235,47 @@ def get_reference_values_from_yfinance(instruments_df, shares_yesterday, referen
     return reference_values
 
 
-# Main Block 01: Initializing    
+# Main Block 01: Initializing
 def initializing(settings_file, screen):
     """Initialisiert das Programm"""
+    global logger
     error_count = 0
     warning_count = 0
     settings = None
     screen = True
 
-    try:   
-        set_working_directory("default", logfile=None, screen=screen)
-        screen_and_log("Info: Arbeitsverzeichnis initial auf Ausführungsordner gesetzt.", logfile=None, screen=screen)
+    # Set initial working directory manually (before logger exists)
+    try:
+        caller_frame = os.path.dirname(os.path.abspath(__file__))
+        os.chdir(caller_frame)
+        print("Info: Arbeitsverzeichnis initial auf Ausführungsordner gesetzt.")
     except Exception as e:
-        screen_and_log(f"ERROR: Fehler beim Setzen des Arbeitsverzeichnisses: {e}", logfile=None, screen=screen)
+        print(f"ERROR: Fehler beim Setzen des Arbeitsverzeichnisses: {e}")
         error_count += 1
-        function_result("Initialisierung", error_count, warning_count, logfile=None, screen=screen)
         return None
 
-    settings = settings_import(settings_file)
+    # Create a temporary logger for initialization
+    temp_logfile = 'temp_init.log'
+    temp_logger = create_extended_logger(temp_logfile, screen_output=screen)
+
+    settings = settings_import(settings_file, logger=temp_logger)
     if settings is None:
-        screen_and_log("ERROR: Einstellungen konnten nicht geladen werden.", logfile=None, screen=screen)
+        print("ERROR: Einstellungen konnten nicht geladen werden.")
         error_count += 1
-        function_result("Initialisierung", error_count, warning_count, logfile=None, screen=screen)
         return None
-    
+
+    logfile = settings['Files']['logfile']
+    if logfile is None:
+        logfile = 'logfile.txt'
+        print("ERROR: Kein Logfile angegeben. Fallback auf 'logfile.txt'.")
+
+    # Initialize the global logger with the correct logfile
+    logger = create_extended_logger(logfile, screen_output=screen)
+    screen_and_log(f"Info: Logger erfolgreich initialisiert mit Logfile: {logfile}", logfile, screen=screen)
+
+    # Set working directory from settings (now with logger)
     try:
-        set_working_directory(settings['Paths']['path'], logfile=None, screen=screen)
+        set_working_directory(settings['Paths']['path'], logger=logger)
         screen_and_log("Info: Arbeitsverzeichnis erfolgreich gesetzt.", logfile=None, screen=screen)
     except Exception as e:
         screen_and_log(f"ERROR: Fehler beim Setzen des Arbeitsverzeichnisses: {e}", logfile=None, screen=screen)
@@ -270,29 +283,23 @@ def initializing(settings_file, screen):
         function_result("Initialisierung", error_count, warning_count, logfile=None, screen=screen)
         return None
 
-    logfile = settings['Files']['logfile']
-    if logfile is None:
-        logfile = 'logfile.txt'
-        screen_and_log("ERROR: Kein Logfile angegeben. Fallback auf 'logfile.txt'.", logfile, screen=screen)
-
-    if not os.path.exists(logfile):
-        try:
-            with open(logfile, 'w', encoding='utf-8') as log_file:
-                log_file.write("")
-            screen_and_log(f"Info: Logfile '{logfile}' wurde neu angelegt.", logfile, screen=screen)
-        except Exception as e:
-            screen_and_log(f"ERROR: Logfile '{logfile}' konnte nicht erstellt werden: {e}", logfile, screen=screen)
-            error_count += 1
-
     # Nur Instruments und Bookings prüfen, prices.parquet wird nicht mehr benötigt
     required_files = [settings['Files']['instruments'], settings['Files']['bookings']]
-    if not files_availability_check(required_files, logfile, screen=screen):
+    if not files_availability_check(required_files, logger=logger):
         screen_and_log("ERROR: Eine oder mehrere Dateien fehlen.", logfile, screen=screen)
         error_count += 1
     else:
         screen_and_log("Info: Alle Dateien verfügbar und erfolgreich geladen.", logfile, screen=screen)
 
     function_result("Initialisierung", error_count, warning_count, logfile, screen=screen)
+
+    # Clean up temporary logfile
+    if os.path.exists(temp_logfile):
+        try:
+            os.remove(temp_logfile)
+        except:
+            pass
+
     return settings
 
 
@@ -501,7 +508,7 @@ def run_monitor(instruments_df, shares_day_df, shares_yesterday, reference_date,
         print(df_out.to_string(index=False))
 
         refresh_time = settings.get("Timing", {}).get("refresh_time", 600)
-        print(f"→ Daten aktualisiert. Nächste Abfrage in {refresh_time} Sekunden.")
+        print(f"-> Daten aktualisiert. Nächste Abfrage in {refresh_time} Sekunden.")
         time.sleep(refresh_time)
 
 
