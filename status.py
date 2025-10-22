@@ -404,14 +404,20 @@ def run_monitor(instruments_df, shares_day_df, shares_yesterday, reference_date,
         
         if new_last_trading_day != current_last_trading_day:
             print(f"[{datetime.now().strftime('%H:%M:%S')}] Neuer Handelstag erkannt: {new_last_trading_day.strftime('%d.%m.%Y')}")
-            current_last_trading_day = new_last_trading_day
-            current_shares_yesterday = shares_day_df.loc[current_last_trading_day] if current_last_trading_day in shares_day_df.index else None
-            
-            if current_shares_yesterday is None:
-                screen_and_log(f"ERROR: Keine Shares-Daten für neuen Handelstag {current_last_trading_day.strftime('%d.%m.%Y')} verfügbar", logfile)
-                print(f"Fehler: Keine Daten für {current_last_trading_day.strftime('%d.%m.%Y')} verfügbar. Verwende alte Daten.")
+
+            # Prüfe, ob Shares-Daten für den neuen Handelstag verfügbar sind
+            new_shares_yesterday = shares_day_df.loc[new_last_trading_day] if new_last_trading_day in shares_day_df.index else None
+
+            if new_shares_yesterday is None:
+                screen_and_log(f"WARNING: Keine Shares-Daten für neuen Handelstag {new_last_trading_day.strftime('%d.%m.%Y')} verfügbar", logfile)
+                print(f"Warnung: Keine Daten für {new_last_trading_day.strftime('%d.%m.%Y')} verfügbar. Behalte altes Referenzdatum {current_last_trading_day.strftime('%d.%m.%Y')} bei.")
+                # WICHTIG: Behalte die alten Werte bei - NICHT aktualisieren!
             else:
+                # Nur aktualisieren, wenn Daten verfügbar sind
+                current_last_trading_day = new_last_trading_day
+                current_shares_yesterday = new_shares_yesterday
                 screen_and_log(f"Info: Referenzdaten für neuen Handelstag {current_last_trading_day.strftime('%d.%m.%Y')} aktualisiert", logfile)
+                print(f"Info: Referenzdatum aktualisiert auf {current_last_trading_day.strftime('%d.%m.%Y')}")
         
         if new_last_trading_day_month != current_last_trading_day_month:
             print(f"[{datetime.now().strftime('%H:%M:%S')}] Neuer monatlicher Referenztag: {new_last_trading_day_month.strftime('%d.%m.%Y') if new_last_trading_day_month else 'None'}")

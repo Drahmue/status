@@ -6,3 +6,6 @@ holidays
 openpyxl
 speedtest-cli
 pyarrow
+
+# Custom library - install from GitHub
+git+https://github.com/Drahmue/ahlib.git

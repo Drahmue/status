@@ -1,0 +1,58 @@
+[2025-10-22 10:03:58] Starting DSL Speedtest Monitoring Service
+[2025-10-22 10:03:58] Running as user: Service
+[2025-10-22 10:03:58] Changed directory to: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status
+[2025-10-22 10:03:58] Starting Python script (status_dsl.py)...
+[2025-10-22 10:10:22] Starting DSL Speedtest Monitoring Service
+[2025-10-22 10:10:22] Running as user: Service
+[2025-10-22 10:10:22] Changed directory to: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status
+[2025-10-22 10:10:22] Starting Python script (status_dsl.py)...
+[2025-10-22 10:35:29] Starting DSL Speedtest Monitoring Service
+[2025-10-22 10:35:29] Running as user: Service
+[2025-10-22 10:35:29] Changed directory to: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status
+[2025-10-22 10:35:29] Starting Python script (status_dsl.py)...
+2025-10-22 10:35:37 - Arbeitsverzeichnis gesetzt auf: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status
+2025-10-22 10:35:37 - Konfigurationsdatei geladen: status_dsl.ini
+2025-10-22 10:35:37 - Status DSL Speedtest monitoring gestartet
+2025-10-22 10:35:37 - Aktualisierungsintervall: 600 Sekunden
+2025-10-22 10:35:38 - Ookla-CLI Version: Speedtest by Ookla 1.2.0.84 (ea6b6773cf) Windows  AMD64
+
+The official command line client for testing the speed and performance
+of your internet connection.
+2025-10-22 10:35:38 - Starte Ookla-CLI: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\ookla\speedtest.exe --accept-license --accept-gdpr --format=json --server-id 31448 --secure
+2025-10-22 10:35:38 - WARN: Ookla-CLI fehlgeschlagen (rc=4294967295, stderr=\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\ookla\speedtest.exe: Unrecognized option: --secure)
+2025-10-22 10:35:39 - Starte Ookla-CLI: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\ookla\speedtest.exe --accept-license --accept-gdpr --format=json --server-id 31448
+2025-10-22 10:36:11 - CLI-Server: Deutsche Telekom – Frankfurt am Main, Germany (ID 31448)
+2025-10-22 10:36:11 - JSON geschrieben: '\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\static\speedtest.json'
+2025-10-22 10:36:13 - Parquet-Daten aktualisiert: '\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\speedtest_data.parquet' (7072 Einträge)
+2025-10-22 10:36:13 - Speedtest erfolgreich: Download 327.53Mbps, Upload 37.68Mbps, Ping 19.32ms
+2025-10-22 10:36:13 - Warte 600 Sekunden bis zum nächsten Test...
+2025-10-22 10:46:13 - Ookla-CLI Version: Speedtest by Ookla 1.2.0.84 (ea6b6773cf) Windows  AMD64
+
+The official command line client for testing the speed and performance
+of your internet connection.
+2025-10-22 10:46:13 - Starte Ookla-CLI: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\ookla\speedtest.exe --accept-license --accept-gdpr --format=json --server-id 31448 --secure
+2025-10-22 10:46:13 - WARN: Ookla-CLI fehlgeschlagen (rc=4294967295, stderr=\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\ookla\speedtest.exe: Unrecognized option: --secure)
+2025-10-22 10:46:14 - Starte Ookla-CLI: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\ookla\speedtest.exe --accept-license --accept-gdpr --format=json --server-id 31448
+2025-10-22 10:46:40 - CLI-Server: Deutsche Telekom – Frankfurt am Main, Germany (ID 31448)
+2025-10-22 10:46:40 - JSON geschrieben: '\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\static\speedtest.json'
+2025-10-22 10:46:40 - Parquet-Daten aktualisiert: '\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\speedtest_data.parquet' (7074 Einträge)
+2025-10-22 10:46:40 - Speedtest erfolgreich: Download 331.96Mbps, Upload 76.73Mbps, Ping 19.0ms
+2025-10-22 10:46:40 - Warte 600 Sekunden bis zum nächsten Test...
+2025-10-22 10:56:40 - Ookla-CLI Version: Speedtest by Ookla 1.2.0.84 (ea6b6773cf) Windows  AMD64
+
+The official command line client for testing the speed and performance
+of your internet connection.
+2025-10-22 10:56:40 - Starte Ookla-CLI: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\ookla\speedtest.exe --accept-license --accept-gdpr --format=json --server-id 31448 --secure
+2025-10-22 10:56:41 - WARN: Ookla-CLI fehlgeschlagen (rc=4294967295, stderr=\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\ookla\speedtest.exe: Unrecognized option: --secure)
+2025-10-22 10:56:41 - Starte Ookla-CLI: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\ookla\speedtest.exe --accept-license --accept-gdpr --format=json --server-id 31448
+2025-10-22 10:57:06 - CLI-Server: Deutsche Telekom – Frankfurt am Main, Germany (ID 31448)
+2025-10-22 10:57:07 - JSON geschrieben: '\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\static\speedtest.json'
+2025-10-22 10:57:07 - Parquet-Daten aktualisiert: '\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\speedtest_data.parquet' (7076 Einträge)
+2025-10-22 10:57:07 - Speedtest erfolgreich: Download 321.5Mbps, Upload 76.65Mbps, Ping 18.95ms
+2025-10-22 10:57:07 - Warte 600 Sekunden bis zum nächsten Test...
+[2025-10-22 11:05:58] ERROR: DSL Speedtest script failed with exit code -1
+[2025-10-22 11:05:58] DSL Speedtest Monitoring Service finished
+[2025-10-22 11:11:07] Starting DSL Speedtest Monitoring Service
+[2025-10-22 11:11:07] Running as user: Service
+[2025-10-22 11:11:07] Changed directory to: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status
+[2025-10-22 11:11:07] Starting Python script (status_dsl.py)...

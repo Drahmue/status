@@ -1,0 +1,83 @@
+[2025-10-22 10:09:40] [INFO] === Starting Production Task Update ===
+[2025-10-22 10:09:40] [INFO] Current User: Administrator
+[2025-10-22 10:09:40] [INFO] Service User: Service
+[2025-10-22 10:09:40] [INFO] Script Directory: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status
+[2025-10-22 10:09:49] [SUCCESS] Credentials received for user: Service
+[2025-10-22 10:09:49] [INFO] 
+[2025-10-22 10:09:49] [INFO] --- Phase 1: Backup Existing Tasks ---
+[2025-10-22 10:09:49] [INFO] Processing task: Status Web App
+[2025-10-22 10:09:50] [SUCCESS]   Backup created: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\_Archiv\Status Web App_backup_2025-10-22_100950.xml
+[2025-10-22 10:09:50] [INFO]   Current task state: Running
+[2025-10-22 10:09:50] [INFO]   Last run: 
+[2025-10-22 10:09:50] [INFO]   Last result: 
+[2025-10-22 10:10:00] [INFO]   Stopping running task...
+[2025-10-22 10:10:02] [SUCCESS]   Task stopped
+[2025-10-22 10:10:02] [INFO] Processing task: DSL Speedtest Monitoring
+[2025-10-22 10:10:03] [SUCCESS]   Backup created: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\_Archiv\DSL Speedtest Monitoring_backup_2025-10-22_101003.xml
+[2025-10-22 10:10:03] [INFO]   Current task state: Running
+[2025-10-22 10:10:03] [INFO]   Last run: 
+[2025-10-22 10:10:03] [INFO]   Last result: 
+[2025-10-22 10:10:06] [INFO]   Stopping running task...
+[2025-10-22 10:10:08] [SUCCESS]   Task stopped
+[2025-10-22 10:10:08] [INFO] 
+[2025-10-22 10:10:08] [INFO] --- Phase 2: Update Tasks ---
+[2025-10-22 10:10:08] [INFO] Updating task: Status Web App
+[2025-10-22 10:10:09] [INFO]   New action: powershell.exe -ExecutionPolicy Bypass -File "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\start_app.ps1"
+[2025-10-22 10:10:09] [INFO]   Unregistering old task...
+[2025-10-22 10:10:09] [INFO]   Registering updated task...
+[2025-10-22 10:10:09] [SUCCESS]   Task updated successfully!
+[2025-10-22 10:10:09] [INFO] 
+[2025-10-22 10:10:09] [INFO] Updating task: DSL Speedtest Monitoring
+[2025-10-22 10:10:10] [INFO]   New action: powershell.exe -ExecutionPolicy Bypass -File "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\start_status_dsl.ps1"
+[2025-10-22 10:10:10] [INFO]   Unregistering old task...
+[2025-10-22 10:10:10] [INFO]   Registering updated task...
+[2025-10-22 10:10:10] [SUCCESS]   Task updated successfully!
+[2025-10-22 10:10:10] [INFO] 
+[2025-10-22 10:10:10] [INFO] --- Phase 3: Verify Updates ---
+[2025-10-22 10:10:11] [INFO] Task: Status Web App
+[2025-10-22 10:10:11] [INFO]   State: Ready
+[2025-10-22 10:10:11] [INFO]   Action: powershell.exe -ExecutionPolicy Bypass -File "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\start_app.ps1"
+[2025-10-22 10:10:11] [INFO]   User: Service
+[2025-10-22 10:10:11] [SUCCESS]   Status: Updated to PowerShell
+[2025-10-22 10:10:11] [INFO] 
+[2025-10-22 10:10:11] [INFO] Task: DSL Speedtest Monitoring
+[2025-10-22 10:10:11] [INFO]   State: Ready
+[2025-10-22 10:10:11] [INFO]   Action: powershell.exe -ExecutionPolicy Bypass -File "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\start_status_dsl.ps1"
+[2025-10-22 10:10:11] [INFO]   User: Service
+[2025-10-22 10:10:11] [SUCCESS]   Status: Updated to PowerShell
+[2025-10-22 10:10:11] [INFO] 
+[2025-10-22 10:10:11] [INFO] --- Phase 4: Start Updated Tasks ---
+[2025-10-22 10:10:16] [INFO] Starting task: Status Web App
+[2025-10-22 10:10:18] [SUCCESS]   Task started. State: Running
+[2025-10-22 10:10:22] [INFO]   Log file: app_2025-10.log
+[2025-10-22 10:10:22] [INFO]     [2025-10-22 10:03:40] Starting Flask application (app.py)...
+[2025-10-22 10:10:22] [INFO]     [2025-10-22 10:10:16] Starting Flask Web Application
+[2025-10-22 10:10:22] [INFO]     [2025-10-22 10:10:16] Running as user: Service
+[2025-10-22 10:10:22] [INFO]     [2025-10-22 10:10:16] Changed directory to: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status
+[2025-10-22 10:10:22] [INFO]     [2025-10-22 10:10:16] Starting Flask application (app.py)...
+[2025-10-22 10:10:22] [INFO] 
+[2025-10-22 10:10:22] [INFO] Starting task: DSL Speedtest Monitoring
+[2025-10-22 10:10:24] [SUCCESS]   Task started. State: Running
+[2025-10-22 10:10:27] [INFO]   Log file: status_dsl_2025-10.log
+[2025-10-22 10:10:27] [INFO]     [2025-10-22 10:03:58] Starting Python script (status_dsl.py)...
+[2025-10-22 10:10:27] [INFO]     [2025-10-22 10:10:22] Starting DSL Speedtest Monitoring Service
+[2025-10-22 10:10:27] [INFO]     [2025-10-22 10:10:22] Running as user: Service
+[2025-10-22 10:10:27] [INFO]     [2025-10-22 10:10:22] Changed directory to: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status
+[2025-10-22 10:10:27] [INFO]     [2025-10-22 10:10:22] Starting Python script (status_dsl.py)...
+[2025-10-22 10:10:27] [INFO] 
+[2025-10-22 10:10:28] [INFO] 
+[2025-10-22 10:10:28] [INFO] === Update Results Summary ===
+[2025-10-22 10:10:28] [INFO] 
+[2025-10-22 10:10:28] [SUCCESS] [OK] Status Web App: SUCCESS
+[2025-10-22 10:10:28] [INFO]   New script: start_app.ps1
+[2025-10-22 10:10:28] [SUCCESS] [OK] DSL Speedtest Monitoring: SUCCESS
+[2025-10-22 10:10:28] [INFO]   New script: start_status_dsl.ps1
+[2025-10-22 10:10:28] [INFO] 
+[2025-10-22 10:10:28] [INFO] Total: 2 tasks
+[2025-10-22 10:10:28] [SUCCESS] Updated successfully: 2
+[2025-10-22 10:10:28] [SUCCESS] Failed: 0
+[2025-10-22 10:10:28] [INFO] 
+[2025-10-22 10:10:28] [INFO] Log file saved to: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\logs\task_update_2025-10-22_100940.log
+[2025-10-22 10:10:28] [INFO] Backups saved to: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\_Archiv\
+[2025-10-22 10:10:28] [INFO] 
+[2025-10-22 10:10:28] [INFO] === Update Complete ===

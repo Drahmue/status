@@ -1,0 +1,7 @@
+[2025-10-20 14:06:25] Starting Stock Monitoring Service
+[2025-10-20 14:06:25] Running as user: Administrator
+[2025-10-20 14:06:25] Checking network resource availability...
+[2025-10-20 14:06:25] Network share \\WIN-H7BKO5H0RMC\Dataserver is available
+[2025-10-20 14:06:25] All required files are accessible
+[2025-10-20 14:06:25] Changed directory to: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status
+[2025-10-20 14:06:25] Starting Python script...

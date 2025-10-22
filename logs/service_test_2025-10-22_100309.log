@@ -1,0 +1,90 @@
+[2025-10-22 10:03:09] [INFO] === Starting Automated Service-User Tests (with Password) ===
+[2025-10-22 10:03:09] [INFO] Current User: Administrator
+[2025-10-22 10:03:09] [INFO] Service User: Service
+[2025-10-22 10:03:09] [INFO] Script Directory: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status
+[2025-10-22 10:03:37] [SUCCESS] Credentials received for user: Service
+[2025-10-22 10:03:37] [INFO] 
+[2025-10-22 10:03:37] [INFO] --- Phase 1: Creating Test Tasks ---
+[2025-10-22 10:03:37] [INFO] Creating test task: Test_App_Service_PWD
+[2025-10-22 10:03:38] [SUCCESS] Test task created: Test_App_Service_PWD
+[2025-10-22 10:03:38] [INFO] Creating test task: Test_DSL_Service_PWD
+[2025-10-22 10:03:38] [SUCCESS] Test task created: Test_DSL_Service_PWD
+[2025-10-22 10:03:38] [INFO] Creating test task: Test_Status_Service_PWD
+[2025-10-22 10:03:39] [SUCCESS] Test task created: Test_Status_Service_PWD
+[2025-10-22 10:03:39] [INFO] 
+[2025-10-22 10:03:39] [INFO] --- Phase 2: Running Tests ---
+[2025-10-22 10:03:39] [INFO] Testing: Flask Web App
+[2025-10-22 10:03:39] [INFO]   Starting task: Test_App_Service_PWD
+[2025-10-22 10:03:40] [INFO]   Task started, waiting 15 seconds...
+[2025-10-22 10:03:55] [INFO]   Task state: Running
+[2025-10-22 10:03:55] [INFO]   Last task result code: 267009
+[2025-10-22 10:03:55] [INFO]   Stopping task...
+[2025-10-22 10:03:57] [SUCCESS]   Log file created/updated: logs\app_2025-10.log
+[2025-10-22 10:03:57] [INFO]   Log content (last 10 lines):
+[2025-10-22 10:03:57] [INFO]     [2025-10-22 10:03:40] Starting Flask Web Application
+[2025-10-22 10:03:57] [INFO]     [2025-10-22 10:03:40] Running as user: Service
+[2025-10-22 10:03:57] [INFO]     [2025-10-22 10:03:40] Changed directory to: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status
+[2025-10-22 10:03:57] [INFO]     [2025-10-22 10:03:40] Starting Flask application (app.py)...
+[2025-10-22 10:03:57] [SUCCESS]   Service user confirmed in log
+[2025-10-22 10:03:57] [SUCCESS]   No error log created
+[2025-10-22 10:03:57] [SUCCESS] Test PASSED: Flask Web App
+[2025-10-22 10:03:57] [INFO] 
+[2025-10-22 10:03:57] [INFO] Testing: DSL Speedtest Monitoring
+[2025-10-22 10:03:58] [INFO]   Starting task: Test_DSL_Service_PWD
+[2025-10-22 10:03:58] [INFO]   Task started, waiting 15 seconds...
+[2025-10-22 10:04:14] [INFO]   Task state: Running
+[2025-10-22 10:04:14] [INFO]   Last task result code: 267009
+[2025-10-22 10:04:14] [INFO]   Stopping task...
+[2025-10-22 10:04:16] [SUCCESS]   Log file created/updated: logs\status_dsl_2025-10.log
+[2025-10-22 10:04:16] [INFO]   Log content (last 10 lines):
+[2025-10-22 10:04:16] [INFO]     [2025-10-22 10:03:58] Starting DSL Speedtest Monitoring Service
+[2025-10-22 10:04:16] [INFO]     [2025-10-22 10:03:58] Running as user: Service
+[2025-10-22 10:04:16] [INFO]     [2025-10-22 10:03:58] Changed directory to: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status
+[2025-10-22 10:04:16] [INFO]     [2025-10-22 10:03:58] Starting Python script (status_dsl.py)...
+[2025-10-22 10:04:16] [SUCCESS]   Service user confirmed in log
+[2025-10-22 10:04:16] [SUCCESS]   No error log created
+[2025-10-22 10:04:16] [SUCCESS] Test PASSED: DSL Speedtest Monitoring
+[2025-10-22 10:04:16] [INFO] 
+[2025-10-22 10:04:16] [INFO] Testing: Stock Monitoring Service
+[2025-10-22 10:04:16] [INFO]   Starting task: Test_Status_Service_PWD
+[2025-10-22 10:04:16] [INFO]   Task started, waiting 15 seconds...
+[2025-10-22 10:04:32] [INFO]   Task state: Running
+[2025-10-22 10:04:32] [INFO]   Last task result code: 267009
+[2025-10-22 10:04:32] [INFO]   Stopping task...
+[2025-10-22 10:04:35] [SUCCESS]   Log file created/updated: logs\status_2025-10.log
+[2025-10-22 10:04:35] [INFO]   Log content (last 10 lines):
+[2025-10-22 10:04:35] [INFO]     [2025-10-22 10:04:17] Starting Stock Monitoring Service
+[2025-10-22 10:04:35] [INFO]     [2025-10-22 10:04:17] Running as user: Service
+[2025-10-22 10:04:35] [INFO]     [2025-10-22 10:04:17] Checking network resource availability...
+[2025-10-22 10:04:35] [INFO]     [2025-10-22 10:04:17] Network share \\WIN-H7BKO5H0RMC\Dataserver is available
+[2025-10-22 10:04:35] [INFO]     [2025-10-22 10:04:17] All required files are accessible
+[2025-10-22 10:04:35] [INFO]     [2025-10-22 10:04:17] Changed directory to: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status
+[2025-10-22 10:04:35] [INFO]     [2025-10-22 10:04:17] Starting Python script...
+[2025-10-22 10:04:35] [SUCCESS]   Service user confirmed in log
+[2025-10-22 10:04:35] [SUCCESS]   No error log created
+[2025-10-22 10:04:35] [SUCCESS] Test PASSED: Stock Monitoring Service
+[2025-10-22 10:04:35] [INFO] 
+[2025-10-22 10:04:35] [INFO] --- Phase 3: Cleanup ---
+[2025-10-22 10:04:35] [INFO] Removing test task: Test_App_Service_PWD
+[2025-10-22 10:04:37] [INFO] Removing test task: Test_DSL_Service_PWD
+[2025-10-22 10:04:38] [INFO] Removing test task: Test_Status_Service_PWD
+[2025-10-22 10:04:38] [SUCCESS] Test tasks cleaned up
+[2025-10-22 10:04:38] [INFO] 
+[2025-10-22 10:04:38] [INFO] === Test Results Summary ===
+[2025-10-22 10:04:39] [INFO] 
+[2025-10-22 10:04:39] [SUCCESS] [PASS] Flask Web App: PASSED
+[2025-10-22 10:04:39] [INFO]   Log: logs\app_2025-10.log
+[2025-10-22 10:04:39] [INFO]   Task Exit Code: 267009
+[2025-10-22 10:04:39] [SUCCESS] [PASS] DSL Speedtest Monitoring: PASSED
+[2025-10-22 10:04:39] [INFO]   Log: logs\status_dsl_2025-10.log
+[2025-10-22 10:04:39] [INFO]   Task Exit Code: 267009
+[2025-10-22 10:04:39] [SUCCESS] [PASS] Stock Monitoring Service: PASSED
+[2025-10-22 10:04:39] [INFO]   Log: logs\status_2025-10.log
+[2025-10-22 10:04:39] [INFO]   Task Exit Code: 267009
+[2025-10-22 10:04:39] [INFO] 
+[2025-10-22 10:04:39] [INFO] Total: 3 tests
+[2025-10-22 10:04:39] [SUCCESS] Passed: 3
+[2025-10-22 10:04:39] [SUCCESS] Failed: 0
+[2025-10-22 10:04:39] [INFO] 
+[2025-10-22 10:04:39] [INFO] Test log saved to: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\logs\service_test_2025-10-22_100309.log
+[2025-10-22 10:04:39] [INFO] === Testing Complete ===

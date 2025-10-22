@@ -1,0 +1,75 @@
+[2025-10-22 10:34:35] [INFO] === Starting Task Move Operation ===
+[2025-10-22 10:34:35] [INFO] Current User: Administrator
+[2025-10-22 10:34:35] [INFO] Service User: Service
+[2025-10-22 10:34:35] [INFO] Target Folder: \AHSkripts\
+[2025-10-22 10:34:45] [SUCCESS] Credentials received for user: Service
+[2025-10-22 10:34:45] [INFO] 
+[2025-10-22 10:34:45] [INFO] --- Phase 1: Check Current Location ---
+[2025-10-22 10:34:46] [SUCCESS] Task found: Status Web App
+[2025-10-22 10:34:46] [INFO]   Current path: \
+[2025-10-22 10:34:46] [INFO]   Current state: Running
+[2025-10-22 10:34:46] [SUCCESS] Task found: DSL Speedtest Monitoring
+[2025-10-22 10:34:46] [INFO]   Current path: \
+[2025-10-22 10:34:46] [INFO]   Current state: Running
+[2025-10-22 10:34:46] [INFO] 
+[2025-10-22 10:34:46] [INFO] --- Phase 2: Create Target Folder ---
+[2025-10-22 10:34:47] [SUCCESS] Folder '\AHSkripts\' already exists
+[2025-10-22 10:34:47] [INFO] 
+[2025-10-22 10:34:47] [INFO] --- Phase 3: Export Tasks ---
+[2025-10-22 10:34:47] [INFO] Exporting task: Status Web App
+[2025-10-22 10:34:47] [SUCCESS]   Backup created: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\_Archiv\Status Web App_before_move_2025-10-22_103447.xml
+[2025-10-22 10:34:47] [INFO] Exporting task: DSL Speedtest Monitoring
+[2025-10-22 10:34:47] [SUCCESS]   Backup created: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\_Archiv\DSL Speedtest Monitoring_before_move_2025-10-22_103447.xml
+[2025-10-22 10:34:47] [INFO] 
+[2025-10-22 10:34:47] [INFO] --- Phase 4: Stop Running Tasks ---
+[2025-10-22 10:34:48] [INFO] Stopping task: Status Web App
+[2025-10-22 10:34:50] [SUCCESS]   Task stopped
+[2025-10-22 10:34:50] [INFO] Stopping task: DSL Speedtest Monitoring
+[2025-10-22 10:34:52] [SUCCESS]   Task stopped
+[2025-10-22 10:34:52] [INFO] 
+[2025-10-22 10:34:52] [INFO] --- Phase 5: Delete Tasks from Root ---
+[2025-10-22 10:34:52] [INFO] Deleting task from root: Status Web App
+[2025-10-22 10:34:53] [SUCCESS]   Task deleted from root
+[2025-10-22 10:34:53] [INFO] Deleting task from root: DSL Speedtest Monitoring
+[2025-10-22 10:34:53] [SUCCESS]   Task deleted from root
+[2025-10-22 10:34:53] [INFO] 
+[2025-10-22 10:34:53] [INFO] --- Phase 6: Register Tasks in AHSkripts Folder ---
+[2025-10-22 10:34:53] [INFO] Registering task in '\AHSkripts\': Status Web App
+[2025-10-22 10:34:53] [SUCCESS]   Task registered successfully!
+[2025-10-22 10:34:53] [INFO] Registering task in '\AHSkripts\': DSL Speedtest Monitoring
+[2025-10-22 10:34:53] [SUCCESS]   Task registered successfully!
+[2025-10-22 10:34:53] [INFO] 
+[2025-10-22 10:34:53] [INFO] --- Phase 7: Verify New Location ---
+[2025-10-22 10:34:54] [SUCCESS] Task: Status Web App
+[2025-10-22 10:34:54] [INFO]   Path: \AHSkripts\
+[2025-10-22 10:34:54] [INFO]   State: Ready
+[2025-10-22 10:34:54] [INFO]   Action: powershell.exe -ExecutionPolicy Bypass -File "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\start_app.ps1"
+[2025-10-22 10:34:54] [SUCCESS]   VERIFIED: Task is in correct folder!
+[2025-10-22 10:34:54] [INFO] 
+[2025-10-22 10:34:55] [SUCCESS] Task: DSL Speedtest Monitoring
+[2025-10-22 10:34:55] [INFO]   Path: \AHSkripts\
+[2025-10-22 10:34:55] [INFO]   State: Ready
+[2025-10-22 10:34:55] [INFO]   Action: powershell.exe -ExecutionPolicy Bypass -File "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\start_status_dsl.ps1"
+[2025-10-22 10:34:55] [SUCCESS]   VERIFIED: Task is in correct folder!
+[2025-10-22 10:34:55] [INFO] 
+[2025-10-22 10:34:55] [INFO] --- Phase 8: Start Moved Tasks ---
+[2025-10-22 10:35:02] [INFO] Starting task: Status Web App
+[2025-10-22 10:35:02] [ERROR]   ERROR: Failed to start task: Das System kann die angegebene Datei nicht finden.
+
+[2025-10-22 10:35:02] [INFO] Starting task: DSL Speedtest Monitoring
+[2025-10-22 10:35:02] [ERROR]   ERROR: Failed to start task: Das System kann die angegebene Datei nicht finden.
+
+[2025-10-22 10:35:02] [INFO] 
+[2025-10-22 10:35:02] [INFO] === Move Results Summary ===
+[2025-10-22 10:35:02] [INFO] 
+[2025-10-22 10:35:02] [SUCCESS] [OK] Status Web App: SUCCESS
+[2025-10-22 10:35:02] [SUCCESS] [OK] DSL Speedtest Monitoring: SUCCESS
+[2025-10-22 10:35:02] [INFO] 
+[2025-10-22 10:35:02] [INFO] Total: 2 tasks
+[2025-10-22 10:35:02] [SUCCESS] Moved successfully: 2
+[2025-10-22 10:35:02] [SUCCESS] Failed: 0
+[2025-10-22 10:35:02] [INFO] 
+[2025-10-22 10:35:02] [INFO] Log file saved to: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\logs\task_move_2025-10-22_103435.log
+[2025-10-22 10:35:02] [INFO] Backups saved to: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\_Archiv\
+[2025-10-22 10:35:02] [INFO] 
+[2025-10-22 10:35:02] [INFO] === Move Operation Complete ===

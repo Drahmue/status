@@ -1,0 +1,64 @@
+[2025-10-22 09:56:48] [INFO] === Starting Automated Service-User Tests ===
+[2025-10-22 09:56:48] [INFO] Current User: Administrator
+[2025-10-22 09:56:48] [INFO] Service User: Service
+[2025-10-22 09:56:48] [INFO] Script Directory: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status
+[2025-10-22 09:56:48] [INFO] --- Phase 1: Creating Test Tasks ---
+[2025-10-22 09:56:48] [INFO] Creating test task: Test_App_Service
+[2025-10-22 09:56:50] [SUCCESS] Test task created: Test_App_Service
+[2025-10-22 09:56:51] [INFO] Creating test task: Test_DSL_Service
+[2025-10-22 09:56:52] [SUCCESS] Test task created: Test_DSL_Service
+[2025-10-22 09:56:52] [INFO] Creating test task: Test_Status_Service
+[2025-10-22 09:56:53] [SUCCESS] Test task created: Test_Status_Service
+[2025-10-22 09:56:53] [INFO] 
+[2025-10-22 09:56:53] [INFO] --- Phase 2: Running Tests ---
+[2025-10-22 09:56:53] [INFO] Testing: Flask Web App
+[2025-10-22 09:56:54] [INFO]   Starting task: Test_App_Service
+[2025-10-22 09:56:54] [INFO]   Task started, waiting 15 seconds...
+[2025-10-22 09:57:09] [INFO]   Task state: Ready
+[2025-10-22 09:57:09] [INFO]   Stopping task...
+[2025-10-22 09:57:11] [ERROR]   Log file not created: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\logs\app_2025-10.log
+[2025-10-22 09:57:11] [SUCCESS]   No error log created
+[2025-10-22 09:57:11] [ERROR] Test FAILED: Flask Web App - Log file not created
+[2025-10-22 09:57:12] [INFO] 
+[2025-10-22 09:57:12] [INFO] Testing: DSL Speedtest Monitoring
+[2025-10-22 09:57:12] [INFO]   Starting task: Test_DSL_Service
+[2025-10-22 09:57:12] [INFO]   Task started, waiting 15 seconds...
+[2025-10-22 09:57:28] [INFO]   Task state: Ready
+[2025-10-22 09:57:28] [INFO]   Stopping task...
+[2025-10-22 09:57:30] [ERROR]   Log file not created: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\logs\status_dsl_2025-10.log
+[2025-10-22 09:57:30] [SUCCESS]   No error log created
+[2025-10-22 09:57:30] [ERROR] Test FAILED: DSL Speedtest Monitoring - Log file not created
+[2025-10-22 09:57:30] [INFO] 
+[2025-10-22 09:57:30] [INFO] Testing: Stock Monitoring Service
+[2025-10-22 09:57:30] [INFO]   Starting task: Test_Status_Service
+[2025-10-22 09:57:30] [INFO]   Task started, waiting 15 seconds...
+[2025-10-22 09:57:46] [INFO]   Task state: Ready
+[2025-10-22 09:57:46] [INFO]   Stopping task...
+[2025-10-22 09:57:48] [ERROR]   Log file not created: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\logs\status_2025-10.log
+[2025-10-22 09:57:48] [SUCCESS]   No error log created
+[2025-10-22 09:57:48] [ERROR] Test FAILED: Stock Monitoring Service - Log file not created
+[2025-10-22 09:57:48] [INFO] 
+[2025-10-22 09:57:48] [INFO] --- Phase 3: Cleanup ---
+[2025-10-22 09:57:49] [INFO] Removing test task: Test_App_Service
+[2025-10-22 09:57:50] [INFO] Removing test task: Test_DSL_Service
+[2025-10-22 09:57:52] [INFO] Removing test task: Test_Status_Service
+[2025-10-22 09:57:53] [SUCCESS] Test tasks cleaned up
+[2025-10-22 09:57:53] [INFO] 
+[2025-10-22 09:57:53] [INFO] === Test Results Summary ===
+[2025-10-22 09:57:53] [INFO] 
+[2025-10-22 09:57:53] [ERROR] [FAIL] Flask Web App: FAILED
+[2025-10-22 09:57:53] [ERROR]   Reason: Log file not created
+[2025-10-22 09:57:53] [INFO]   Log: logs\app_2025-10.log
+[2025-10-22 09:57:53] [ERROR] [FAIL] DSL Speedtest Monitoring: FAILED
+[2025-10-22 09:57:53] [ERROR]   Reason: Log file not created
+[2025-10-22 09:57:53] [INFO]   Log: logs\status_dsl_2025-10.log
+[2025-10-22 09:57:53] [ERROR] [FAIL] Stock Monitoring Service: FAILED
+[2025-10-22 09:57:53] [ERROR]   Reason: Log file not created
+[2025-10-22 09:57:53] [INFO]   Log: logs\status_2025-10.log
+[2025-10-22 09:57:53] [INFO] 
+[2025-10-22 09:57:53] [INFO] Total: 3 tests
+[2025-10-22 09:57:53] [SUCCESS] Passed: 0
+[2025-10-22 09:57:53] [ERROR] Failed: 3
+[2025-10-22 09:57:53] [INFO] 
+[2025-10-22 09:57:53] [INFO] Test log saved to: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\logs\service_test_2025-10-22_095648.log
+[2025-10-22 09:57:53] [INFO] === Testing Complete ===
