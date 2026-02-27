@@ -292,3 +292,52 @@ After restarting the Stock Monitoring Service, the reference date correctly upda
 **Related Files:**
 - `status.py` (lines 405-420) - Main fix location
 - `static/depotdaten.json` - Output file with reference_date field
+
+### Task Scheduler ExecutionTimeLimit Bug (Fixed: 2026-02-27)
+
+**Problem:**
+The Stock Monitoring Service stopped after exactly ~72 hours without any log entry. Exit code 267014 was recorded by Task Scheduler.
+
+**Root Cause:**
+Task Scheduler's default `ExecutionTimeLimit` is `PT72H` (72 hours) when `UseUnifiedSchedulingEngine=true` and no explicit limit is configured. After 72 hours, Windows forcibly terminates the process – no warning, no log entry.
+
+**Symptoms:**
+- Service state changes from `Running` to `Ready` after ~72 hours
+- Last JSON update timestamp is exactly ~72h after last task start time
+- Exit code 267014 in Task Scheduler
+- No error entries in Python log (`status.log`)
+
+**Fix Implemented:**
+Set `ExecutionTimeLimit = PT0S` (no limit) on the Stock Monitoring Service task:
+
+```powershell
+$task = Get-ScheduledTask -TaskName "Stock Monitoring Service" -TaskPath "\AHSkripts\"
+$task.Settings.ExecutionTimeLimit = "PT0S"
+Set-ScheduledTask -TaskName "Stock Monitoring Service" -TaskPath "\AHSkripts\" `
+    -Settings $task.Settings -User "WIN-H7BKO5H0RMC\Service" -Password $pw
+```
+
+**Related Files:**
+- Task Scheduler: `\AHSkripts\Stock Monitoring Service`
+- `TROUBLESHOOTING_STOCK_MONITORING.md` - Detailed diagnosis steps
+
+### Silent Crash in run_monitor() (Fixed: 2026-02-27)
+
+**Problem:**
+The `while True` loop in `run_monitor()` had no outer `try/except` block. Any unhandled exception (e.g. yfinance network error, API timeout) would silently terminate the entire Python process with no log entry.
+
+**Root Cause:**
+Several calls outside the per-WKN `try/except` block could raise unhandled exceptions:
+- `get_last_trading_day()`, `get_current_prices()`, `get_reference_values_from_yfinance()`
+- `pd.DataFrame(output_rows)`, `open("static/depotdaten.json", 'w', ...)`
+
+**Fix Implemented:**
+Added outer `try/except` in `run_monitor()` in `status.py`:
+- Full traceback logged to `status.log` on exception
+- Loop continues after `refresh_time` seconds instead of crashing
+- `refresh_time` moved before the `try` block so it is available in `except`
+- `import traceback` added at top of file
+
+**Related Files:**
+- `status.py` (`run_monitor()` function) - Main fix location
+- `status.log` - Will now contain ERROR entries with full traceback on failures

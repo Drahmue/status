@@ -5,6 +5,7 @@ import sys
 from datetime import datetime, timedelta
 from holidays.countries.germany import Germany
 import time
+import traceback
 import json
 
 # Import ahlib functions
@@ -398,124 +399,136 @@ def run_monitor(instruments_df, shares_day_df, shares_yesterday, reference_date,
     current_shares_yesterday = shares_yesterday
     
     while True:
-        # Prüfe, ob sich der letzte Handelstag geändert hat
-        new_last_trading_day = get_last_trading_day()
-        new_last_trading_day_month = get_last_trading_day_of_previous_month()
-        
-        if new_last_trading_day != current_last_trading_day:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] Neuer Handelstag erkannt: {new_last_trading_day.strftime('%d.%m.%Y')}")
+        refresh_time = settings.get("Timing", {}).get("refresh_time", 60)
+        try:
+            # Prüfe, ob sich der letzte Handelstag geändert hat
+            new_last_trading_day = get_last_trading_day()
+            new_last_trading_day_month = get_last_trading_day_of_previous_month()
 
-            # Prüfe, ob Shares-Daten für den neuen Handelstag verfügbar sind
-            new_shares_yesterday = shares_day_df.loc[new_last_trading_day] if new_last_trading_day in shares_day_df.index else None
+            if new_last_trading_day != current_last_trading_day:
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] Neuer Handelstag erkannt: {new_last_trading_day.strftime('%d.%m.%Y')}")
 
-            if new_shares_yesterday is None:
-                screen_and_log(f"WARNING: Keine Shares-Daten für neuen Handelstag {new_last_trading_day.strftime('%d.%m.%Y')} verfügbar", logfile)
-                print(f"Warnung: Keine Daten für {new_last_trading_day.strftime('%d.%m.%Y')} verfügbar. Behalte altes Referenzdatum {current_last_trading_day.strftime('%d.%m.%Y')} bei.")
-                # WICHTIG: Behalte die alten Werte bei - NICHT aktualisieren!
-            else:
-                # Nur aktualisieren, wenn Daten verfügbar sind
-                current_last_trading_day = new_last_trading_day
-                current_shares_yesterday = new_shares_yesterday
-                screen_and_log(f"Info: Referenzdaten für neuen Handelstag {current_last_trading_day.strftime('%d.%m.%Y')} aktualisiert", logfile)
-                print(f"Info: Referenzdatum aktualisiert auf {current_last_trading_day.strftime('%d.%m.%Y')}")
-        
-        if new_last_trading_day_month != current_last_trading_day_month:
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] Neuer monatlicher Referenztag: {new_last_trading_day_month.strftime('%d.%m.%Y') if new_last_trading_day_month else 'None'}")
-            current_last_trading_day_month = new_last_trading_day_month
-            screen_and_log(f"Info: Monatlicher Referenztag aktualisiert auf {current_last_trading_day_month.strftime('%d.%m.%Y') if current_last_trading_day_month else 'None'}", logfile)
-        
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] Starte Kursabfrage...")
-        current_prices = get_current_prices(instruments_df)
-        
-        # Hole Referenzdaten direkt von yfinance mit aktuellen Referenzdaten
-        reference_data = get_reference_values_from_yfinance(instruments_df, current_shares_yesterday, current_last_trading_day, logfile)
-        
-        output_rows = []
+                # Prüfe, ob Shares-Daten für den neuen Handelstag verfügbar sind
+                new_shares_yesterday = shares_day_df.loc[new_last_trading_day] if new_last_trading_day in shares_day_df.index else None
 
-        for wkn, price_today in current_prices.items():
-            try:
-                if wkn in reference_data:
-                    ref_data = reference_data[wkn]
-                    price_yesterday = ref_data['price']
-                    share_count = ref_data['share']
-                    
-                    if share_count > 0:
-                        diff_price = price_today - price_yesterday
-                        percent_price = (diff_price / price_yesterday) * 100
-                        diff_value = diff_price * share_count
+                if new_shares_yesterday is None:
+                    screen_and_log(f"WARNING: Keine Shares-Daten für neuen Handelstag {new_last_trading_day.strftime('%d.%m.%Y')} verfügbar", logfile)
+                    print(f"Warnung: Keine Daten für {new_last_trading_day.strftime('%d.%m.%Y')} verfügbar. Behalte altes Referenzdatum {current_last_trading_day.strftime('%d.%m.%Y')} bei.")
+                    # WICHTIG: Behalte die alten Werte bei - NICHT aktualisieren!
+                else:
+                    # Nur aktualisieren, wenn Daten verfügbar sind
+                    current_last_trading_day = new_last_trading_day
+                    current_shares_yesterday = new_shares_yesterday
+                    screen_and_log(f"Info: Referenzdaten für neuen Handelstag {current_last_trading_day.strftime('%d.%m.%Y')} aktualisiert", logfile)
+                    print(f"Info: Referenzdatum aktualisiert auf {current_last_trading_day.strftime('%d.%m.%Y')}")
 
-                        # Monatliche Unterschiede falls verfügbar
-                        diff_price_month = ""
-                        percent_price_month = ""
-                        diff_value_month = ""
-                        
-                        if current_last_trading_day_month is not None:
-                            monthly_ref_data = get_reference_values_from_yfinance(
-                                instruments_df, current_shares_yesterday, current_last_trading_day_month, logfile)
-                            
-                            if wkn in monthly_ref_data:
-                                price_last_month = monthly_ref_data[wkn]['price']
-                                diff_price_month = round(price_today - price_last_month, 2)
-                                percent_price_month = round(((price_today - price_last_month) / price_last_month) * 100, 2)
-                                diff_value_month = round((price_today - price_last_month) * share_count, 2)
+            if new_last_trading_day_month != current_last_trading_day_month:
+                print(f"[{datetime.now().strftime('%H:%M:%S')}] Neuer monatlicher Referenztag: {new_last_trading_day_month.strftime('%d.%m.%Y') if new_last_trading_day_month else 'None'}")
+                current_last_trading_day_month = new_last_trading_day_month
+                screen_and_log(f"Info: Monatlicher Referenztag aktualisiert auf {current_last_trading_day_month.strftime('%d.%m.%Y') if current_last_trading_day_month else 'None'}", logfile)
 
-                        instrument_name = instruments_df.loc[wkn, "instrument_name"] if wkn in instruments_df.index else wkn
-                        output_rows.append({
-                            "Name": instrument_name,
-                            "Aktueller Preis": round(price_today, 2),
-                            "Kursdiff": round(diff_price, 2),
-                            "Kursdiff (%)": round(percent_price, 2),
-                            "Wertdiff (€)": round(diff_value, 2),
-                            "Kursdiff Monat": diff_price_month,
-                            "Kursdiff Monat (%)": percent_price_month,
-                            "Wertdiff Monat (€)": diff_value_month
-                        })
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] Starte Kursabfrage...")
+            current_prices = get_current_prices(instruments_df)
 
-            except Exception as e:
-                print(f"WKN {wkn}: Fehler – {e}")
+            # Hole Referenzdaten direkt von yfinance mit aktuellen Referenzdaten
+            reference_data = get_reference_values_from_yfinance(instruments_df, current_shares_yesterday, current_last_trading_day, logfile)
 
-        df_out = pd.DataFrame(output_rows)
+            output_rows = []
 
-        # Summenzeile hinzufügen
-        if not df_out.empty:
-            gesamtwertdiff = df_out["Wertdiff (€)"].sum()
-            
-            gesamtwertdiff_month = ""
-            if "Wertdiff Monat (€)" in df_out.columns:
-                monthly_values = df_out["Wertdiff Monat (€)"]
-                numeric_monthly = [val for val in monthly_values if isinstance(val, (int, float))]
-                if numeric_monthly:
-                    gesamtwertdiff_month = round(sum(numeric_monthly), 2)
-            
-            df_out.loc[len(df_out.index)] = {
-                "Name": "SUMME",
-                "Aktueller Preis": "",
-                "Kursdiff": "",
-                "Kursdiff (%)": "",
-                "Wertdiff (€)": round(gesamtwertdiff, 2),
-                "Kursdiff Monat": "",
-                "Kursdiff Monat (%)": "",
-                "Wertdiff Monat (€)": gesamtwertdiff_month
+            for wkn, price_today in current_prices.items():
+                try:
+                    if wkn in reference_data:
+                        ref_data = reference_data[wkn]
+                        price_yesterday = ref_data['price']
+                        share_count = ref_data['share']
+
+                        if share_count > 0:
+                            diff_price = price_today - price_yesterday
+                            percent_price = (diff_price / price_yesterday) * 100
+                            diff_value = diff_price * share_count
+
+                            # Monatliche Unterschiede falls verfügbar
+                            diff_price_month = ""
+                            percent_price_month = ""
+                            diff_value_month = ""
+
+                            if current_last_trading_day_month is not None:
+                                monthly_ref_data = get_reference_values_from_yfinance(
+                                    instruments_df, current_shares_yesterday, current_last_trading_day_month, logfile)
+
+                                if wkn in monthly_ref_data:
+                                    price_last_month = monthly_ref_data[wkn]['price']
+                                    diff_price_month = round(price_today - price_last_month, 2)
+                                    percent_price_month = round(((price_today - price_last_month) / price_last_month) * 100, 2)
+                                    diff_value_month = round((price_today - price_last_month) * share_count, 2)
+
+                            instrument_name = instruments_df.loc[wkn, "instrument_name"] if wkn in instruments_df.index else wkn
+                            output_rows.append({
+                                "Name": instrument_name,
+                                "Aktueller Preis": round(price_today, 2),
+                                "Kursdiff": round(diff_price, 2),
+                                "Kursdiff (%)": round(percent_price, 2),
+                                "Wertdiff (€)": round(diff_value, 2),
+                                "Kursdiff Monat": diff_price_month,
+                                "Kursdiff Monat (%)": percent_price_month,
+                                "Wertdiff Monat (€)": diff_value_month
+                            })
+
+                except Exception as e:
+                    print(f"WKN {wkn}: Fehler – {e}")
+
+            df_out = pd.DataFrame(output_rows)
+
+            # Summenzeile hinzufügen
+            if not df_out.empty:
+                gesamtwertdiff = df_out["Wertdiff (€)"].sum()
+
+                gesamtwertdiff_month = ""
+                if "Wertdiff Monat (€)" in df_out.columns:
+                    monthly_values = df_out["Wertdiff Monat (€)"]
+                    numeric_monthly = [val for val in monthly_values if isinstance(val, (int, float))]
+                    if numeric_monthly:
+                        gesamtwertdiff_month = round(sum(numeric_monthly), 2)
+
+                df_out.loc[len(df_out.index)] = {
+                    "Name": "SUMME",
+                    "Aktueller Preis": "",
+                    "Kursdiff": "",
+                    "Kursdiff (%)": "",
+                    "Wertdiff (€)": round(gesamtwertdiff, 2),
+                    "Kursdiff Monat": "",
+                    "Kursdiff Monat (%)": "",
+                    "Wertdiff Monat (€)": gesamtwertdiff_month
+                }
+
+            # JSON-Struktur mit Referenzdaten erstellen
+            json_data = {
+                "reference_date": current_last_trading_day.strftime('%d.%m.%Y'),
+                "reference_date_month": current_last_trading_day_month.strftime('%d.%m.%Y') if current_last_trading_day_month is not None else "",
+                "data": df_out.to_dict('records')
             }
 
-        # JSON-Struktur mit Referenzdaten erstellen
-        json_data = {
-            "reference_date": current_last_trading_day.strftime('%d.%m.%Y'),
-            "reference_date_month": current_last_trading_day_month.strftime('%d.%m.%Y') if current_last_trading_day_month is not None else "",
-            "data": df_out.to_dict('records')
-        }
-        
-        with open("static/depotdaten.json", 'w', encoding='utf-8') as f:
-            json.dump(json_data, f, ensure_ascii=False, indent=2)
-        
-        print(f"Kursdifferenz bezogen auf Schlusskurs vom: {current_last_trading_day.strftime('%d.%m.%Y')}")
-        if current_last_trading_day_month is not None:
-            print(f"Monatliche Kursdifferenz bezogen auf Schlusskurs vom: {current_last_trading_day_month.strftime('%d.%m.%Y')}")
-        print(df_out.to_string(index=False))
+            with open("static/depotdaten.json", 'w', encoding='utf-8') as f:
+                json.dump(json_data, f, ensure_ascii=False, indent=2)
 
-        refresh_time = settings.get("Timing", {}).get("refresh_time", 600)
-        print(f"-> Daten aktualisiert. Nächste Abfrage in {refresh_time} Sekunden.")
-        time.sleep(refresh_time)
+            print(f"Kursdifferenz bezogen auf Schlusskurs vom: {current_last_trading_day.strftime('%d.%m.%Y')}")
+            if current_last_trading_day_month is not None:
+                print(f"Monatliche Kursdifferenz bezogen auf Schlusskurs vom: {current_last_trading_day_month.strftime('%d.%m.%Y')}")
+            print(df_out.to_string(index=False))
+
+            print(f"-> Daten aktualisiert. Nächste Abfrage in {refresh_time} Sekunden.")
+            time.sleep(refresh_time)
+
+        except Exception as e:
+            screen_and_log(
+                f"ERROR: Unbehandelte Exception in Monitoring-Schleife: {e}\n{traceback.format_exc()}",
+                logfile
+            )
+            screen_and_log(
+                f"Schleife wird nach {refresh_time} Sekunden fortgesetzt.",
+                logfile
+            )
+            time.sleep(refresh_time)
 
 
 def main():
