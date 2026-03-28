@@ -14,6 +14,17 @@ $LOGSTAMP = (Get-Date).ToString("yyyy-MM")
 $LOGFILE = "$LOGDIR\status_dsl_$LOGSTAMP.log"
 $ERRORLOG = "$LOGDIR\status_dsl_errors_$LOGSTAMP.log"
 
+# Notification-Bibliothek laden
+$notifyAvailable = $false
+$notifyLib = Join-Path $scriptDir "Send-ErrorNotification.ps1"
+if (Test-Path $notifyLib) {
+    try {
+        . $notifyLib
+        $notifyAvailable = $true
+    }
+    catch { Write-Warning "FEHLER beim Laden der Notification-Bibliothek: $_" }
+}
+
 # Create logs directory if it doesn't exist
 try {
     if (-not (Test-Path -Path $LOGDIR)) {
@@ -89,6 +100,10 @@ try {
     } else {
         Add-Content -Path $LOGFILE -Value "$timestamp ERROR: DSL Speedtest script failed with exit code $RC"
         Add-Content -Path $ERRORLOG -Value "$timestamp ERROR: DSL Speedtest script failed with exit code $RC"
+        if ($notifyAvailable) {
+            Send-ErrorNotification -ScriptName "start_status_dsl (status_dsl.py)" -ExitCode $RC `
+                -ErrorMessage "DSL Speedtest script exited with code $RC" -LogFile $LOGFILE
+        }
     }
 
     Add-Content -Path $LOGFILE -Value "$timestamp DSL Speedtest Monitoring Service finished"
@@ -105,6 +120,10 @@ try {
     Add-Content -Path $LOGFILE -Value $errorMsg -ErrorAction SilentlyContinue
     "$errorMsg`nStack Trace: $($_.ScriptStackTrace)" | Out-File -FilePath $ERRORLOG -Append
     $RC = 1
+    if ($notifyAvailable) {
+        Send-ErrorNotification -ScriptName "start_status_dsl (status_dsl.py)" -ExitCode $RC `
+            -ErrorMessage $($_.Exception.Message) -LogFile $LOGFILE
+    }
 }
 
 # Exit with the return code

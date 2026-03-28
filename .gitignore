@@ -14,6 +14,9 @@ speedtest_data.parquet
 # Uncomment if these contain sensitive information
 # status.ini
 
+# Notification credentials
+notify_config.json
+
 # Temporary files
 *.tmp
 *.temp

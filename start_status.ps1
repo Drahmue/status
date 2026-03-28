@@ -14,6 +14,17 @@ $LOGSTAMP = (Get-Date).ToString("yyyy-MM")
 $LOGFILE = "$LOGDIR\status_$LOGSTAMP.log"
 $ERRORLOG = "$LOGDIR\status_errors_$LOGSTAMP.log"
 
+# Notification-Bibliothek laden
+$notifyAvailable = $false
+$notifyLib = Join-Path $scriptDir "Send-ErrorNotification.ps1"
+if (Test-Path $notifyLib) {
+    try {
+        . $notifyLib
+        $notifyAvailable = $true
+    }
+    catch { Write-Warning "FEHLER beim Laden der Notification-Bibliothek: $_" }
+}
+
 # Network file paths to check
 $NETWORK_PATH = "\\WIN-H7BKO5H0RMC\Dataserver"
 $REQUIRED_FILE1 = "\\WIN-H7BKO5H0RMC\Dataserver\Dummy\Finance_Input\Instrumente.xlsx"
@@ -102,6 +113,10 @@ $timestamp = Get-Date -Format "[yyyy-MM-dd HH:mm:ss]"
 Add-Content -Path $LOGFILE -Value "$timestamp Checking network resource availability..." -ErrorAction SilentlyContinue
 
 if (-not (Wait-ForNetworkResources -LogFile $LOGFILE -ErrorLog $ERRORLOG)) {
+    if ($notifyAvailable) {
+        Send-ErrorNotification -ScriptName "start_status (status.py)" -ExitCode 1 `
+            -ErrorMessage "Netzwerk-Ressourcen nach Timeout nicht erreichbar" -LogFile $LOGFILE
+    }
     exit 1
 }
 
@@ -155,6 +170,10 @@ try {
     } else {
         Add-Content -Path $LOGFILE -Value "$timestamp ERROR: Python script failed with exit code $RC"
         Add-Content -Path $ERRORLOG -Value "$timestamp ERROR: Python script failed with exit code $RC"
+        if ($notifyAvailable) {
+            Send-ErrorNotification -ScriptName "start_status (status.py)" -ExitCode $RC `
+                -ErrorMessage "Python script exited with code $RC" -LogFile $LOGFILE
+        }
     }
 
     Add-Content -Path $LOGFILE -Value "$timestamp Stock Monitoring Service finished"
@@ -171,6 +190,10 @@ try {
     Add-Content -Path $LOGFILE -Value $errorMsg -ErrorAction SilentlyContinue
     "$errorMsg`nStack Trace: $($_.ScriptStackTrace)" | Out-File -FilePath $ERRORLOG -Append
     $RC = 1
+    if ($notifyAvailable) {
+        Send-ErrorNotification -ScriptName "start_status (status.py)" -ExitCode $RC `
+            -ErrorMessage $($_.Exception.Message) -LogFile $LOGFILE
+    }
 }
 
 # Exit with the return code
