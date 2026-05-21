@@ -1,5 +1,7 @@
 # Log files
+logs/
 status.log
+status_zaehler.log
 kursabfrage_file_log.txt
 status_dsl.log
 dsl_speedtest_viewer.log
@@ -7,8 +9,10 @@ dsl_speedtest_viewer.log
 # Data files (generated/updated automatically)
 static/depotdaten.json
 static/speedtest.json
+static/zaehler.json
 prices.parquet
 speedtest_data.parquet
+debug_output.txt
 
 # Configuration files with sensitive data
 # Uncomment if these contain sensitive information
@@ -40,3 +44,11 @@ __pycache__/
 *.swp
 *.swo
 *~
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Claude Code local settings
+.claude/
