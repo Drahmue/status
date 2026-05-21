@@ -226,6 +226,20 @@ This provides utility functions for logging, file operations, and configuration 
   - Emergency logging fallback
   - Separate error logs
 
+**Task Scheduler Tasks (`\AHSkripts\`):**
+- `Status Web App` - Flask web application (start_app.ps1)
+- `Stock Monitoring Service` - Stock monitoring (start_status.ps1), ExecutionTimeLimit=PT0S
+- `DSL Speedtest Monitoring` - DSL monitoring (start_status_dsl.ps1)
+- `Zaehler Monitoring` - Gas & electricity meter monitoring (start_status_zaehler.ps1)
+- All tasks run under `HauServer\Service` account
+
+**Important: Flask Template Changes**
+After modifying `templates/main.html`, the Flask task must be restarted to pick up the new template (Jinja2 caches templates when not in debug mode):
+```powershell
+Stop-ScheduledTask -TaskName "Status Web App" -TaskPath "\AHSkripts\"
+Start-ScheduledTask -TaskName "Status Web App" -TaskPath "\AHSkripts\"
+```
+
 **Testing & Deployment Tools:**
 - `_Archiv\test_as_service_with_password.ps1` - Automated Service-user testing with password authentication
 - `_Archiv\update_production_tasks.ps1` - Updates Task Scheduler tasks from Batch to PowerShell
