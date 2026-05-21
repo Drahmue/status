@@ -6,7 +6,7 @@ REM Version for Service Account with enhanced logging and error handling
 setlocal EnableDelayedExpansion
 
 REM Set variables
-set SCRIPT_DIR=\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status
+set SCRIPT_DIR=\\HauServer\Dataserver\_Batchprozesse\status
 set LOG_FILE=%SCRIPT_DIR%\task_scheduler.log
 set VENV_PATH=%SCRIPT_DIR%\.venv\Scripts
 set PYTHON_SCRIPT=%SCRIPT_DIR%\status.py
@@ -35,9 +35,9 @@ if not exist "%PYTHON_SCRIPT%" (
 )
 
 REM Wait for network share and required files to be available
-set NETWORK_PATH=\\WIN-H7BKO5H0RMC\Dataserver
-set REQUIRED_FILE1=\\WIN-H7BKO5H0RMC\Dataserver\Dummy\Finance_Input\Instrumente.xlsx
-set REQUIRED_FILE2=\\WIN-H7BKO5H0RMC\Dataserver\Dummy\Finance_Input\bookings.xlsx
+set NETWORK_PATH=\\HauServer\Dataserver
+set REQUIRED_FILE1=\\HauServer\Dataserver\Dummy\Finance_Input\Instrumente.xlsx
+set REQUIRED_FILE2=\\HauServer\Dataserver\Dummy\Finance_Input\bookings.xlsx
 set MAX_NETWORK_WAIT=120
 set NETWORK_WAIT_COUNT=0
 

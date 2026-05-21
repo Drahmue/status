@@ -2,7 +2,7 @@
 REM Flask Web Application Starter
 REM Task 1 - Start app.py with system start
 
-cd /d "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status"
+cd /d "\\HauServer\Dataserver\_Batchprozesse\status"
 call .venv\Scripts\activate
 python app.py
 

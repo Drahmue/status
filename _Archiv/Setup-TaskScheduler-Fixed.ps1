@@ -2,7 +2,7 @@
 # Run as Administrator
 
 param(
-    [string]$ServiceAccount = "WIN-H7BKO5H0RMC\Service",
+    [string]$ServiceAccount = "HauServer\Service",
     [string]$BasePath = "D:\Dataserver\_Batchprozesse\status"
 )
 

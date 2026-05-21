@@ -11,7 +11,7 @@ param(
 $ErrorActionPreference = "Stop"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
-$scriptDir = "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status"
+$scriptDir = "\\HauServer\Dataserver\_Batchprozesse\status"
 $logFile = "$scriptDir\logs\task_update_$(Get-Date -Format 'yyyy-MM-dd_HHmmss').log"
 
 function Write-Log {

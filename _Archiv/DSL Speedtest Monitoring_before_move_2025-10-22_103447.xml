@@ -34,7 +34,7 @@
   <Actions Context="Author">
     <Exec>
       <Command>powershell.exe</Command>
-      <Arguments>-ExecutionPolicy Bypass -File "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\start_status_dsl.ps1"</Arguments>
+      <Arguments>-ExecutionPolicy Bypass -File "\\HauServer\Dataserver\_Batchprozesse\status\start_status_dsl.ps1"</Arguments>
     </Exec>
   </Actions>
 </Task>

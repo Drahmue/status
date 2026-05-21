@@ -8,7 +8,7 @@ $ErrorActionPreference = "Continue"
 $env:PYTHONIOENCODING = "utf-8"
 
 # Early error logging setup (before main script execution)
-$scriptDir = "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status"
+$scriptDir = "\\HauServer\Dataserver\_Batchprozesse\status"
 $LOGDIR = "$scriptDir\logs"
 $LOGSTAMP = (Get-Date).ToString("yyyy-MM")
 $LOGFILE = "$LOGDIR\status_$LOGSTAMP.log"
@@ -26,9 +26,9 @@ if (Test-Path $notifyLib) {
 }
 
 # Network file paths to check
-$NETWORK_PATH = "\\WIN-H7BKO5H0RMC\Dataserver"
-$REQUIRED_FILE1 = "\\WIN-H7BKO5H0RMC\Dataserver\Dummy\Finance_Input\Instrumente.xlsx"
-$REQUIRED_FILE2 = "\\WIN-H7BKO5H0RMC\Dataserver\Dummy\Finance_Input\bookings.xlsx"
+$NETWORK_PATH = "\\HauServer\Dataserver"
+$REQUIRED_FILE1 = "\\HauServer\Dataserver\Dummy\Finance_Input\Instrumente.xlsx"
+$REQUIRED_FILE2 = "\\HauServer\Dataserver\Dummy\Finance_Input\bookings.xlsx"
 
 # Network wait configuration: 3-5 minutes (60 attempts * 5 seconds = 5 minutes)
 $MAX_NETWORK_WAIT = 60

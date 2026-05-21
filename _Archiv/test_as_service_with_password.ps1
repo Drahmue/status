@@ -12,7 +12,7 @@ param(
 $ErrorActionPreference = "Continue"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
-$scriptDir = "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status"
+$scriptDir = "\\HauServer\Dataserver\_Batchprozesse\status"
 $testLogFile = "$scriptDir\logs\service_test_$(Get-Date -Format 'yyyy-MM-dd_HHmmss').log"
 $testResults = @()
 

@@ -8,7 +8,7 @@ $ErrorActionPreference = "Continue"
 $env:PYTHONIOENCODING = "utf-8"
 
 # Directory and logging configuration
-$scriptDir = "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status"
+$scriptDir = "\\HauServer\Dataserver\_Batchprozesse\status"
 $LOGDIR = "$scriptDir\logs"
 $LOGSTAMP = (Get-Date).ToString("yyyy-MM")
 $LOGFILE = "$LOGDIR\status_dsl_$LOGSTAMP.log"
