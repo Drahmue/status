@@ -112,6 +112,7 @@ This is a comprehensive monitoring system combining stock portfolio tracking wit
 - `status.py` - Core stock monitoring engine that fetches prices via yfinance, processes portfolio data, and exports JSON
 - `app.py` - Flask web server that serves the monitoring dashboard
 - `status_dsl.py` - DSL speedtest monitoring with continuous internet speed measurements and data storage
+- `status_zaehler.py` - Gas and electricity meter monitoring via local Tasmota devices, exports JSON
 - `dsl_speedtest_viewer.py` - Interactive viewer for DSL speedtest historical data and statistics
 - `status_simplified.py` / `status_backup.py` - Development versions with different approaches
 
@@ -129,12 +130,19 @@ This is a comprehensive monitoring system combining stock portfolio tracking wit
 3. Exports current data to `static/speedtest.json` for web interface
 4. `dsl_speedtest_viewer.py` provides interactive analysis of historical speedtest data
 
+*Meter Monitoring (Gas & Electricity):*
+1. `status_zaehler.py` queries two local Tasmota devices every 5 minutes via HTTP
+2. Gas Reader (192.168.178.130): parses "Zählerstand" in m³
+3. Electricity Meter / Hichi Lesekopf (192.168.178.133): parses MT691 Total Consumed, Total Delivered, Current Consumption
+4. Exports current readings to `static/zaehler.json` for web interface
+
 *Web Interface:*
-5. `app.py` serves web interface that consumes both JSON data sources
+5. `app.py` serves web interface that consumes all JSON data sources
 
 **Configuration:**
 - `status.ini` - Stock monitoring configuration with paths, file references, timing settings
 - `status_dsl.ini` - DSL speedtest configuration with Ookla CLI path, server preferences, update intervals
+- `status_zaehler.ini` - Meter monitoring configuration with Tasmota device URLs and update interval
 - `dsl_speedtest_viewer.ini` - Viewer configuration for data analysis tools
 - External dependencies on network-shared Excel files for instruments and bookings data
 - Configurable refresh intervals for both stock and speedtest monitoring
@@ -144,11 +152,13 @@ This is a comprehensive monitoring system combining stock portfolio tracking wit
 - `speedtest_data.parquet` - Historical DSL speedtest data storage (efficient Parquet format)
 - `static/depotdaten.json` - Real-time portfolio data for web interface
 - `static/speedtest.json` - Current DSL speedtest data for web interface
+- `static/zaehler.json` - Current gas and electricity meter readings for web interface
 
 **Log Files (Centralized in `logs\` directory with monthly rotation):**
 - `logs\app_YYYY-MM.log` - Flask Web App starter script logs (monthly rotation)
 - `logs\status_YYYY-MM.log` - Stock Monitoring starter script logs (monthly rotation)
 - `logs\status_dsl_YYYY-MM.log` - DSL Speedtest starter script logs (monthly rotation)
+- `logs\status_zaehler_YYYY-MM.log` - Meter monitoring starter script logs (monthly rotation)
 - `logs\*_errors_YYYY-MM.log` - Error logs for each service (created only if errors occur)
 - `logs\service_test_*.log` - Automated test logs with timestamps
 - Python scripts may create additional logs in root directory (configured via .ini files):
@@ -185,6 +195,12 @@ This provides utility functions for logging, file operations, and configuration 
 - Interactive data viewer with statistics and trend analysis
 - Support for specific server selection (Deutsche Telekom Frankfurt)
 
+**Meter Monitoring (Gas & Electricity):**
+- Periodic polling of local Tasmota devices via HTTP (no extra library, uses stdlib urllib)
+- Gas Reader at 192.168.178.130 (Smartnetz Gas Reader): Zählerstand in m³
+- Electricity meter at 192.168.178.133 (Hichi Lesekopf MT691): Bezug, Einspeisung, Aktueller Verbrauch
+- Exports `static/zaehler.json` every 5 minutes (configurable)
+
 **Web Interface & Data Management:**
 - Flask-based dashboard consuming both monitoring data sources
 - JSON API endpoints for real-time data
@@ -201,6 +217,7 @@ This provides utility functions for logging, file operations, and configuration 
 - `start_app.ps1` - Starts Flask Web Application with logging and error handling
 - `start_status.ps1` - Starts Stock Monitoring Service with network wait logic
 - `start_status_dsl.ps1` - Starts DSL Speedtest Monitoring
+- `start_status_zaehler.ps1` - Starts Gas & Electricity Meter Monitoring
 - All scripts include:
   - UNC path support via `Push-Location`
   - Monthly log rotation

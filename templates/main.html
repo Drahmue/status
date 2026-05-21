@@ -36,7 +36,7 @@
       color: green;
     }
 
-    #speedtest-section {
+    #speedtest-section, #zaehler-section {
       margin-top: 3em;
       border: 1px solid #ddd;
       padding: 1em;
@@ -168,6 +168,76 @@
 
     setInterval(ladeDepotdaten, 10 * 1000); // alle 10 Sekunden
     ladeDepotdaten();
+  </script>
+
+  <div id="zaehler-section">
+    <h3 style="margin-top: 0;">Zählerstände</h3>
+    <div id="zaehler-data">
+      <div class="speedtest-data">
+        <div>Gas Zählerstand</div>
+        <div class="speedtest-value" id="gas-zaehlerstand">--</div>
+        <div class="speedtest-unit">m³</div>
+      </div>
+      <div class="speedtest-data">
+        <div>Strom Bezug</div>
+        <div class="speedtest-value" id="strom-bezug">--</div>
+        <div class="speedtest-unit">kWh</div>
+      </div>
+      <div class="speedtest-data">
+        <div>Strom Einspeisung</div>
+        <div class="speedtest-value" id="strom-einspeisung">--</div>
+        <div class="speedtest-unit">kWh</div>
+      </div>
+      <div class="speedtest-data">
+        <div>Aktueller Verbrauch</div>
+        <div class="speedtest-value" id="strom-aktuell">--</div>
+        <div class="speedtest-unit">W</div>
+      </div>
+      <div class="speedtest-data">
+        <div>Zuletzt aktualisiert</div>
+        <div class="speedtest-value" id="zaehler-timestamp" style="font-size: 0.8em;">--</div>
+        <div class="speedtest-unit"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function ladeZaehlerDaten() {
+      fetch('/static/zaehler.json?t=' + new Date().getTime())
+        .then(response => {
+          if (!response.ok) throw new Error('Zaehler data not available');
+          return response.json();
+        })
+        .then(data => {
+          const gas = data.gas || {};
+          const strom = data.strom || {};
+
+          document.getElementById('gas-zaehlerstand').textContent =
+            gas.zaehlerstand_m3 != null ? gas.zaehlerstand_m3.toFixed(2) : '--';
+          document.getElementById('strom-bezug').textContent =
+            strom.bezug_kwh != null ? strom.bezug_kwh.toFixed(0) : '--';
+          document.getElementById('strom-einspeisung').textContent =
+            strom.einspeisung_kwh != null ? strom.einspeisung_kwh.toFixed(0) : '--';
+          document.getElementById('strom-aktuell').textContent =
+            strom.aktuell_w != null ? strom.aktuell_w : '--';
+
+          if (data.timestamp) {
+            const ts = new Date(data.timestamp.replace(' ', 'T'));
+            document.getElementById('zaehler-timestamp').textContent =
+              ts.toLocaleTimeString('de-DE');
+          }
+        })
+        .catch(error => {
+          console.log('Zaehler data not available:', error);
+          ['gas-zaehlerstand', 'strom-bezug', 'strom-einspeisung', 'strom-aktuell'].forEach(id => {
+            document.getElementById(id).textContent = '--';
+          });
+          document.getElementById('zaehler-timestamp').textContent = 'Nicht verfügbar';
+        });
+    }
+
+    setInterval(ladeZaehlerDaten, 5 * 60 * 1000); // alle 5 Minuten
+    ladeZaehlerDaten();
   </script>
 
   <script>
