@@ -1,5 +1,39 @@
 # CHANGELOG - 21. Mai 2026
 
+## Responsive Design für alle Geräte
+
+### Neue Funktion: Statusseite passt sich automatisch an Bildschirmgröße an
+
+**Datum:** 22. Mai 2026  
+**Geänderte Datei:** `templates/main.html`
+
+---
+
+### Übersicht
+
+Die Statusseite skaliert nun automatisch abhängig vom Gerät — Desktop, Tablet, Smartphone und Samsung Galaxy Z Fold (zugeklappt und aufgeklappt).
+
+---
+
+### Breakpoints
+
+| Gerät | Breakpoint | Schriftgröße | Besonderheiten |
+|-------|-----------|-------------|----------------|
+| Desktop | > 820px | 2em | Unverändert |
+| Tablet / Z Fold aufgeklappt (~748px) | ≤ 820px | 1.4em | Kompakteres Padding |
+| Smartphone / Z Fold zugeklappt (~390px) | ≤ 430px | 1.0em | Tabelle horizontal scrollbar |
+
+---
+
+### Technische Änderungen
+
+- `<meta name="viewport" content="width=device-width, initial-scale=1.0">` ergänzt — verhindert künstliches Herauszoomen auf mobilen Browsern
+- CSS Media Queries für drei Bildschirmgrößen hinzugefügt
+- Depot-Tabelle in `<div class="table-wrapper">` eingeschlossen mit `overflow-x: auto` — bei schmalen Screens horizontal scrollbar statt abgeschnitten
+- Samsung Galaxy Z Fold wird automatisch erkannt: zugeklappt (Cover Screen) springt in ≤ 430px-Modus, aufgeklappt (Innendisplay) in ≤ 820px-Modus
+
+---
+
 ## Externer Zugriff via Tailscale eingerichtet
 
 ### Neue Funktion: Statusseite von eigenen Geräten außerhalb des Heimnetzes erreichbar

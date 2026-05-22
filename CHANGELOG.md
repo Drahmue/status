@@ -480,6 +480,7 @@ Get-Content "D:\Dataserver\_Batchprozesse\status\status.log" -Tail 50 | Select-S
 
 | Datum | Datei | Zusammenfassung | Priorität |
 |-------|-------|-----------------|-----------|
+| **22.05.2026** | [CHANGELOG_2026-05-21.md](./CHANGELOG_2026-05-21.md) | 📱 Responsive Design — Statusseite skaliert auf Desktop, Tablet, Smartphone, Z Fold | 🟢 MINOR |
 | **21.05.2026** | [CHANGELOG_2026-05-21.md](./CHANGELOG_2026-05-21.md) | 🌐 Tailscale VPN eingerichtet — externer Zugriff via `http://hauserver:5000` | 🟢 MINOR |
 | **21.05.2026** | [CHANGELOG_2026-05-21.md](./CHANGELOG_2026-05-21.md) | 📊 Zählerstand-Monitoring (Gas & Strom via Tasmota) hinzugefügt | 🟡 MAJOR |
 | **27.02.2026** | [CHANGELOG_2026-02-27.md](./CHANGELOG_2026-02-27.md) | 🔧 ExecutionTimeLimit Bug + Silent Crash in run_monitor() behoben | 🔴 CRITICAL |
