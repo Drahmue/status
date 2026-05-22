@@ -1,5 +1,74 @@
 # CHANGELOG - 21. Mai 2026
 
+## Externer Zugriff via Tailscale eingerichtet
+
+### Neue Funktion: Statusseite von eigenen Geräten außerhalb des Heimnetzes erreichbar
+
+**Datum:** 21. Mai 2026  
+**Eingerichtet auf:** HauServer, ahflipalt, ahfold, ahlap
+
+---
+
+### Übersicht
+
+Die Statusseite ist nun von den eigenen Geräten auch außerhalb des Heimnetzes erreichbar — ohne offene Router-Ports und ohne Sicherheitsrisiken.
+
+**Lösung:** [Tailscale](https://tailscale.com) bildet ein privates VPN-Mesh zwischen den eigenen Geräten. Nur Geräte, die mit demselben Tailscale-Account eingeloggt sind, können sich gegenseitig erreichen.
+
+---
+
+### Zugriff
+
+Wenn Tailscale auf dem jeweiligen Gerät aktiv ist:
+
+```
+http://hauserver:5000
+```
+
+Alternativ über die Tailscale-IP des Servers (z. B. `100.x.x.x:5000`), falls MagicDNS nicht verfügbar ist.
+
+**Voraussetzung:** Tailscale muss auf dem zugreifenden Gerät laufen und mit demselben Account eingeloggt sein.
+
+---
+
+### Eingerichtete Geräte
+
+| Gerät | Typ | Installation |
+|-------|-----|-------------|
+| HauServer | Windows Server 2022 | `winget install Tailscale.Tailscale` |
+| ahflipalt | Windows | `winget install Tailscale.Tailscale` |
+| ahlap | Windows | `winget install Tailscale.Tailscale` |
+| ahfold | Android | Play Store → "Tailscale" |
+
+Alle Geräte sind mit demselben Tailscale-Account verknüpft.
+
+---
+
+### Technische Details
+
+- **Kein Port-Forwarding** am Router erforderlich
+- **Kein offener Port** von außen sichtbar
+- Der Server baut eine ausgehende Verbindung zu Tailscale auf — externe Geräte verbinden sich über das Tailscale-Netz, nicht direkt
+- **MagicDNS** ermöglicht den Hostnamen `hauserver` statt IP-Adresse
+- **Kostenlos** für Personal-Plan (1 Nutzer, bis 100 Geräte)
+- Flask läuft unverändert auf `localhost:5000` — keine Konfigurationsänderung am Server nötig
+
+---
+
+### Tailscale-Dienst auf HauServer
+
+Tailscale läuft als Windows-Dienst und startet automatisch mit dem System:
+
+```powershell
+# Status prüfen
+Get-Service -Name Tailscale
+
+# Tailscale-IP des Servers anzeigen
+tailscale ip
+```
+
+---
+
 ## Zählerstand-Monitoring hinzugefügt
 
 ### Neue Funktion: Gas- und Stromzähler in der Statusseite

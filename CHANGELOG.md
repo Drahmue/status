@@ -480,6 +480,9 @@ Get-Content "D:\Dataserver\_Batchprozesse\status\status.log" -Tail 50 | Select-S
 
 | Datum | Datei | Zusammenfassung | Priorität |
 |-------|-------|-----------------|-----------|
+| **21.05.2026** | [CHANGELOG_2026-05-21.md](./CHANGELOG_2026-05-21.md) | 🌐 Tailscale VPN eingerichtet — externer Zugriff via `http://hauserver:5000` | 🟢 MINOR |
+| **21.05.2026** | [CHANGELOG_2026-05-21.md](./CHANGELOG_2026-05-21.md) | 📊 Zählerstand-Monitoring (Gas & Strom via Tasmota) hinzugefügt | 🟡 MAJOR |
+| **27.02.2026** | [CHANGELOG_2026-02-27.md](./CHANGELOG_2026-02-27.md) | 🔧 ExecutionTimeLimit Bug + Silent Crash in run_monitor() behoben | 🔴 CRITICAL |
 | **30.10.2025** | [CHANGELOG_2025-10-30.md](./CHANGELOG_2025-10-30.md) | ⚠️ **CRITICAL:** Task Scheduler Fehlkonfiguration behoben - Service lief nicht seit Server-Neustart | 🔴 CRITICAL |
 | **22.10.2025** | [CHANGELOG_2025-10-22.md](./CHANGELOG_2025-10-22.md) | 🔄 PowerShell Migration, Zentralisierte Logs, Automatisierte Tests | 🟡 MAJOR |
 | **20.10.2025** | [CHANGELOG_2025-10-20.md](./CHANGELOG_2025-10-20.md) | 🔧 UNC Path Problem gelöst, Initiale PowerShell-Konvertierung | 🟢 MINOR |
@@ -545,6 +548,7 @@ Get-Content "D:\Dataserver\_Batchprozesse\status\status.log" -Tail 50 | Select-S
 
 | Datum | Verbesserung | Details |
 |-------|--------------|---------|
+| 21.05.2026 | Tailscale externer Zugriff | Statusseite via `http://hauserver:5000` von ahflipalt, ahfold, ahlap erreichbar — ohne offene Ports |
 | 22.10.2025 | Log-Cleanup | Automatische Bereinigung von Logs > 120 Tage |
 | 22.10.2025 | Emergency Logging | Fallback zu `C:\Temp\` wenn `logs/` nicht verfügbar |
 | 20.10.2025 | UNC Path Support | `Push-Location` für Netzwerkfreigaben |
