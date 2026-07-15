@@ -10,18 +10,23 @@ Der Stock Monitoring Service ist ein **Daemon-Prozess**, der:
 - Alle 60 Sekunden Aktienkurse aktualisiert
 - Um Mitternacht prüft, ob ein neuer Handelstag begonnen hat
 
-**Bekannte Probleme – beide behoben (Februar 2026):**
+**Bekannte Probleme – alle behoben:**
 
-**Problem 1: Task Scheduler ExecutionTimeLimit PT72H (Hauptursache)**
+**Problem 1: Task Scheduler ExecutionTimeLimit PT72H (Hauptursache, Februar 2026)**
 - Service stoppte nach exakt 72 Stunden ohne Log-Eintrag
 - Exit Code 267014 = Task durch ExecutionTimeLimit beendet
 - Betraf alle drei Daemon-Tasks (Nov 2025, Feb 2026 mehrfach)
 - **Behoben:** ExecutionTimeLimit auf PT0S gesetzt (kein Limit)
 
-**Problem 2: Fehlende Fehlerbehandlung in run_monitor() (sekundär)**
+**Problem 2: Fehlende Fehlerbehandlung in run_monitor() (sekundär, Februar 2026)**
 - Unbehandelte Exceptions in der `while True`-Schleife beendeten das Script lautlos
 - Kein Fehler-Log, kein Traceback
 - **Behoben:** Äußerer try/except-Block mit vollem Traceback-Logging ergänzt
+
+**Problem 3: NTFS-Rechte nach Server-Neuaufsetzen unvollständig (Juli 2026)**
+- Nach Neuaufsetzen des Servers (WS2022 → WS2025) `RuntimeError: [Errno 13] Permission denied` beim Zugriff auf `Instrumente.xlsx`
+- Ursache: Service-Account hatte nur Read & Execute statt Modify auf `Finance_Input`
+- **Behoben:** NTFS-Modify-Recht für Service-Account ergänzt (siehe Abschnitt "Problem: Permission denied trotz lesbarer Datei (Errno 13)")
 
 ## Diagnose-Schritte
 
@@ -213,6 +218,52 @@ Test-Path "\\WIN-H7BKO5H0RMC\Dataserver\Dummy\Finance_Input\bookings.xlsx"
 - Netzwerkverbindung prüfen
 - Berechtigungen für Service-User prüfen
 - Firewall-Einstellungen prüfen
+
+### Problem: Permission denied trotz lesbarer Datei (Errno 13) ✅ BEHOBEN (Juli 2026)
+
+**Symptome:**
+```
+RuntimeError: [Errno 13] Permission denied: '\\HauServer\Dataserver\Dummy\Finance_Input\Instrumente.xlsx'
+```
+- Fehler tritt in `ahlib.py`, Funktion `is_file_open_windows()` auf
+- Manuell als Administrator (lokaler Pfad `D:\...` als Working Dir) funktioniert der Zugriff
+- Als Service-Account über Task Scheduler (UNC-Pfad `\\HauServer\...` als Working Dir) schlägt er fehl
+- `Test-Path` auf die Datei liefert `True` – die Datei ist grundsätzlich sichtbar/lesbar
+
+**Typischer Auslöser:** Server-Neuaufsetzen (z. B. WS2022 → WS2025) oder Neuanlage des Service-Accounts – NTFS-ACLs werden dabei nicht automatisch migriert bzw. nur mit den in DEPLOYMENT.md als "Minimum" genannten Rechten neu vergeben.
+
+**Root Cause:**
+`is_file_open_windows()` in `ahlib.py` (Zeile ~498) prüft, ob eine Datei gesperrt ist, indem es sie **schreibend** öffnet:
+```python
+with open(file_path, 'r+b') as file:
+    msvcrt.locking(file.fileno(), msvcrt.LK_NBLCK, 1)
+    msvcrt.locking(file.fileno(), msvcrt.LK_UNLCK, 1)
+```
+`'r+b'` erfordert NTFS-Schreibrecht – reines Leserecht (Read & Execute) reicht nicht, obwohl die Datei nie tatsächlich verändert wird. Das ist unabhängig vom lokalen/UNC-Pfad; der Unterschied "Administrator funktioniert, Service-Account nicht" kommt daher, dass Administrator vollen Zugriff (F) hat, der Service-Account aber nur RX.
+
+**Wichtig – False Leads, die NICHT die Ursache sind:**
+- `DisableLoopbackCheck` / `BackConnectionHostNames`: Das sind **IIS/HTTP-NTLM-Mechanismen**, die den Loopback-Zugriff auf Webanwendungen betreffen. Sie haben **keinen Effekt auf SMB-Dateizugriffe**. Diese Registry-Einstellungen können gesetzt bleiben (schaden nicht), lösen dieses Problem aber nicht.
+- SMB-Share-Berechtigungen (`Get-SmbShareAccess`): Waren im beobachteten Fall bereits korrekt (`Change` für den Service-Account). Windows kombiniert Share- und NTFS-Rechte und wendet das restriktivere an – die NTFS-Ebene war der Flaschenhals, nicht die Freigabe-Ebene.
+
+**Diagnose:**
+```powershell
+# NTFS-Rechte des Service-Accounts auf Ordner und Datei prüfen
+icacls "D:\Dataserver\Dummy\Finance_Input"
+icacls "D:\Dataserver\Dummy\Finance_Input\Instrumente.xlsx"
+# Wenn nur "(RX)" statt "(M)" oder "(F)" für den Service-Account erscheint: das ist die Ursache
+
+# Zum Vergleich: SMB-Share-Ebene prüfen (meist NICHT die Ursache)
+Get-SmbShareAccess -Name Dataserver
+```
+
+**Lösung:**
+```powershell
+# Modify-Recht rekursiv für den Service-Account ergänzen (additiv, entfernt nichts Bestehendes)
+icacls "D:\Dataserver\Dummy\Finance_Input" /grant "HAUSERVER\Service:(OI)(CI)M" /T
+```
+Danach Task neu starten und `status.log` prüfen – die Zeile `Verfügbarkeitscheck abgeschlossen: 2/2 Dateien verfügbar.` muss ohne nachfolgenden `RuntimeError` erscheinen.
+
+**Hinweis für zukünftige Server-Neuaufsetzen:** DEPLOYMENT.md §2.1 nennt "Read & execute, Write, Modify" als Minimum – bei ACL-Neuvergabe nach einem Server-Wechsel darauf achten, dass tatsächlich **Modify** (nicht nur Read & Execute) gesetzt wird, da `is_file_open_windows()` dies zwingend benötigt.
 
 ## Service manuell starten
 
