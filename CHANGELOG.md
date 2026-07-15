@@ -1,8 +1,8 @@
 # CHANGELOG - Stock Monitoring System
 
 **Projekt:** Stock Portfolio Monitoring & DSL Speedtest System
-**Letzte Aktualisierung:** 30. Oktober 2025
-**Version:** 2.1 (PowerShell-basiert)
+**Letzte Aktualisierung:** 15. Juli 2026
+**Version:** 2.2 (PowerShell-basiert)
 
 ---
 
@@ -480,6 +480,7 @@ Get-Content "D:\Dataserver\_Batchprozesse\status\status.log" -Tail 50 | Select-S
 
 | Datum | Datei | Zusammenfassung | Priorität |
 |-------|-------|-----------------|-----------|
+| **15.07.2026** | [CHANGELOG_2026-07-15.md](./CHANGELOG_2026-07-15.md) | 🔧 Server-Neuaufsetzen (WS2022→WS2025): NTFS-Permission-Bug (Errno 13) + fehlender SSH-Zugriff für Git-Push behoben | 🔴 CRITICAL |
 | **22.05.2026** | [CHANGELOG_2026-05-21.md](./CHANGELOG_2026-05-21.md) | 📱 Responsive Design — Statusseite skaliert auf Desktop, Tablet, Smartphone, Z Fold | 🟢 MINOR |
 | **21.05.2026** | [CHANGELOG_2026-05-21.md](./CHANGELOG_2026-05-21.md) | 🌐 Tailscale VPN eingerichtet — externer Zugriff via `http://hauserver:5000` | 🟢 MINOR |
 | **21.05.2026** | [CHANGELOG_2026-05-21.md](./CHANGELOG_2026-05-21.md) | 📊 Zählerstand-Monitoring (Gas & Strom via Tasmota) hinzugefügt | 🟡 MAJOR |
@@ -534,6 +535,7 @@ Get-Content "D:\Dataserver\_Batchprozesse\status\status.log" -Tail 50 | Select-S
 
 | Datum | Problem | Lösung | Status |
 |-------|---------|--------|--------|
+| 15.07.2026 | Permission denied (Errno 13) nach Server-Neuaufsetzen - Service-Account hatte nur RX statt Modify auf Finance_Input | NTFS-ACL korrigiert via `icacls /grant Service:(OI)(CI)M` | ✅ Behoben |
 | 30.10.2025 | Service lief nicht - Task Scheduler Fehlkonfiguration | Task neu erstellt mit korrekter Konfiguration (`powershell.exe` statt `.ps1` direkt) | ✅ Behoben |
 | 22.10.2025 | Reference Date Update Bug - Datum wurde nicht aktualisiert | Logic-Fix in `run_monitor()` - nur updaten wenn Shares-Daten verfügbar | ✅ Behoben |
 

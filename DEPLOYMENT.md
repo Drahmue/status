@@ -1,6 +1,6 @@
 # Windows Server Deployment Guide
 
-**Version:** 2.0 (Updated 2025-10-22)
+**Version:** 2.1 (Updated 2026-07-15)
 **Status:** PowerShell-based deployment with centralized logging
 
 This document describes how to deploy the Status monitoring system on a Windows Server using Task Scheduler to run services automatically on system startup.
@@ -33,7 +33,24 @@ The deployment consists of 3 automated services running as PowerShell scripts:
 
 ## Step 1: Repository Setup
 
-### 1.1 Clone Repository on Server
+### 1.1 SSH Key for GitHub Access
+
+After a fresh Windows install, `%USERPROFILE%\.ssh` is empty and `git clone`/`git push` over SSH will fail (`Permission denied (publickey)` or `Host key verification failed`). Set this up once per server/account before cloning:
+
+```powershell
+# 1. Add GitHub's host key to known_hosts (avoids "Host key verification failed")
+ssh-keyscan -t rsa,ecdsa,ed25519 github.com >> $env:USERPROFILE\.ssh\known_hosts
+
+# 2. Generate a key pair (skip if one already exists)
+ssh-keygen -t ed25519 -C "your-email@example.com" -f $env:USERPROFILE\.ssh\id_ed25519 -N '""'
+
+# 3. Print the public key to add to GitHub
+Get-Content $env:USERPROFILE\.ssh\id_ed25519.pub
+```
+
+Add the printed public key in GitHub under **Repository → Settings → Deploy keys** (check "Allow write access" if the server needs to `git push`, not just `git pull`). A repo-scoped Deploy Key is preferred over a personal account key for single-purpose servers.
+
+### 1.2 Clone Repository on Server
 
 ```cmd
 cd D:\Dataserver\_Batchprozesse
@@ -41,7 +58,7 @@ git clone [repository-url] status
 cd status
 ```
 
-### 1.2 Create Virtual Environment
+### 1.3 Create Virtual Environment
 
 ```cmd
 python -m venv .venv
@@ -49,20 +66,20 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-### 1.3 Pull Latest Updates
+### 1.4 Pull Latest Updates
 
 ```cmd
 git pull origin main
 ```
 
-### 1.4 Verify PowerShell Scripts
+### 1.5 Verify PowerShell Scripts
 
 Ensure these PowerShell scripts are present:
 - `start_app.ps1` - Flask Web Application starter
 - `start_status.ps1` - Stock Monitoring Service starter
 - `start_status_dsl.ps1` - DSL Speedtest Monitoring starter
 
-### 1.5 Create Required Directories
+### 1.6 Create Required Directories
 
 ```powershell
 # Create logs directory if not exists
@@ -90,6 +107,14 @@ New-Item -Path "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\static" -Item
 - `logs\` - For log files
 - `static\` - For JSON output files
 - Root directory - For Parquet data files
+
+**⚠️ Critical: "Full control" or at minimum "Modify" is required on `Finance_Input`, not just "Read & execute".**
+`ahlib.py`'s `is_file_open_windows()` opens Excel files in write mode (`r+b`) purely to test for a lock — this fails with `PermissionError: [Errno 13]` if the Service account only has Read & Execute, even though the file is otherwise fully readable. This bit us after a server rebuild (WS2022 → WS2025, 2026-07-15) when ACLs were re-created with only RX. **Verify after every server/account rebuild:**
+```powershell
+icacls "D:\Dataserver\Dummy\Finance_Input\Instrumente.xlsx"
+# Service account must show (M) or (F), not just (RX)
+```
+See `CLAUDE.md` → "NTFS Permission Bug After Server Rebuild" and `TROUBLESHOOTING_STOCK_MONITORING.md` for the full incident and fix command.
 
 ### 2.2 Grant "Log on as a Service" Right
 
@@ -730,6 +755,7 @@ Register-ScheduledTask -Xml (Get-Content "D:\Backups\Status Web App.xml" | Out-S
 
 ### Version History
 
+- **Version 2.1 (2026-07-15):** Documented SSH deploy key setup (Step 1.1) and NTFS Modify-permission requirement after server rebuild (WS2022 → WS2025)
 - **Version 2.0 (2025-10-22):** PowerShell-based deployment with centralized logging
 - **Version 1.0:** Original Batch-based deployment
 
@@ -746,9 +772,11 @@ Register-ScheduledTask -Xml (Get-Content "D:\Backups\Status Web App.xml" | Out-S
 - Review Windows Event Viewer → System logs
 
 ### Documentation
+- **CHANGELOG_2026-07-15.md** - Server rebuild (WS2022→WS2025): NTFS permission fix, SSH deploy key setup
 - **CHANGELOG_2025-10-22.md** - Recent changes and test results
 - **CHANGELOG_2025-10-20.md** - UNC path problem resolution
 - **CHANGELOG_2025-10-17.md** - Network wait logic implementation
+- **TROUBLESHOOTING_STOCK_MONITORING.md** - Diagnosis steps incl. NTFS/SMB permission issues
 - **README.md** - Project overview
 - **CLAUDE.md** - Development guidelines
 
@@ -763,7 +791,7 @@ If issues persist:
 
 ---
 
-**Document Version:** 2.0
-**Last Updated:** 2025-10-22
+**Document Version:** 2.1
+**Last Updated:** 2026-07-15
 **Deployment Status:** Tested and verified with Service account
 **All Services:** Running and operational

@@ -372,3 +372,29 @@ Added outer `try/except` in `run_monitor()` in `status.py`:
 **Related Files:**
 - `status.py` (`run_monitor()` function) - Main fix location
 - `status.log` - Will now contain ERROR entries with full traceback on failures
+
+### NTFS Permission Bug After Server Rebuild (Fixed: 2026-07-15)
+
+**Problem:**
+After rebuilding the Windows Server (WS2022 → WS2025) and recreating all Task Scheduler tasks, `status.py` failed under the `Service` account with:
+```
+RuntimeError: [Errno 13] Permission denied: '\\HauServer\Dataserver\Dummy\Finance_Input\Instrumente.xlsx'
+```
+Manual execution as Administrator worked fine; only the Service-account/Task-Scheduler context failed.
+
+**Root Cause:**
+`is_file_open_windows()` in `ahlib.py` (`.venv\Lib\site-packages\ahlib\ahlib.py`, called from `files_availability_check()`) opens the target file in write mode (`open(file_path, 'r+b')`) to test for a lock via `msvcrt.locking()` — even though it never writes. This requires NTFS **Modify** rights, not just Read & Execute. After the server rebuild, the `Service` account's NTFS ACL on `Finance_Input` had only been (re-)granted `(RX)` instead of `(M)`, so the lock-check itself failed with Permission Denied even though the file was fully readable and visible (`Test-Path` returned `True`).
+
+**Not the cause (ruled out during diagnosis):** `DisableLoopbackCheck` / `BackConnectionHostNames` are IIS/HTTP-only NTLM-loopback settings and have no effect on SMB file access. SMB share-level permissions (`Get-SmbShareAccess`) were already correct (`Change` for `Service`) — the NTFS ACL was the sole bottleneck.
+
+**Fix Implemented:**
+```powershell
+icacls "D:\Dataserver\Dummy\Finance_Input" /grant "HAUSERVER\Service:(OI)(CI)M" /T
+```
+Grants Modify recursively, additive to existing ACEs.
+
+**Related Files:**
+- `.venv\Lib\site-packages\ahlib\ahlib.py` (`is_file_open_windows()`, line ~498) - Root cause location
+- `DEPLOYMENT.md` §2.1 - Already specified Modify as minimum; ensure this is actually applied after any server/account rebuild
+- `TROUBLESHOOTING_STOCK_MONITORING.md` - Detailed diagnosis steps and verification commands
+- `CHANGELOG_2026-07-15.md` - Full incident writeup
