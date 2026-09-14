@@ -190,9 +190,10 @@ def get_historical_price(ticker, date, logfile=None, screen=True):
         return None
 
 
-def get_current_prices(instruments_df):
+def get_current_prices(instruments_df, logfile=None):
     """Holt aktuelle Preise für alle Instrumente"""
     prices = {}
+    attempted = 0
     for wkn, row in instruments_df.iterrows():
         raw_ticker = row["ticker"]
 
@@ -203,6 +204,7 @@ def get_current_prices(instruments_df):
         if ticker == "":
             continue
 
+        attempted += 1
         try:
             data = yf.download(ticker, period="1d", interval="1m", progress=False, auto_adjust=False)
             if data is not None and not data.empty and "Close" in data.columns:
@@ -210,8 +212,18 @@ def get_current_prices(instruments_df):
                 if not close_data.empty:
                     last_valid_price = float(close_data.dropna().iloc[-1].item())
                     prices[wkn] = last_valid_price
+                else:
+                    screen_and_log(f"WARNING: Keine gültigen Schlusskurse (Close leer) für {ticker} (WKN {wkn})", logfile, screen=False)
+            else:
+                screen_and_log(f"WARNING: Keine Kursdaten von yfinance für {ticker} (WKN {wkn})", logfile, screen=False)
         except Exception as e:
-            print(f"Fehler beim Abrufen von {ticker} für WKN {wkn}: {e}")
+            screen_and_log(f"WARNING: Fehler beim Abrufen von {ticker} (WKN {wkn}): {e}", logfile, screen=False)
+
+    if len(prices) < attempted:
+        screen_and_log(
+            f"WARNING: Kursabfrage unvollständig: {len(prices)}/{attempted} Ticker erfolgreich abgerufen.",
+            logfile, screen=False)
+
     return prices
 
 
@@ -428,7 +440,7 @@ def run_monitor(instruments_df, shares_day_df, shares_yesterday, reference_date,
                 screen_and_log(f"Info: Monatlicher Referenztag aktualisiert auf {current_last_trading_day_month.strftime('%d.%m.%Y') if current_last_trading_day_month else 'None'}", logfile)
 
             print(f"[{datetime.now().strftime('%H:%M:%S')}] Starte Kursabfrage...")
-            current_prices = get_current_prices(instruments_df)
+            current_prices = get_current_prices(instruments_df, logfile)
 
             # Hole Referenzdaten direkt von yfinance mit aktuellen Referenzdaten
             reference_data = get_reference_values_from_yfinance(instruments_df, current_shares_yesterday, current_last_trading_day, logfile)
