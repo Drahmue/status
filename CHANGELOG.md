@@ -1,7 +1,7 @@
 # CHANGELOG - Stock Monitoring System
 
 **Projekt:** Stock Portfolio Monitoring & DSL Speedtest System
-**Letzte Aktualisierung:** 15. Juli 2026
+**Letzte Aktualisierung:** 20. Juli 2026
 **Version:** 2.2 (PowerShell-basiert)
 
 ---
@@ -480,6 +480,7 @@ Get-Content "D:\Dataserver\_Batchprozesse\status\status.log" -Tail 50 | Select-S
 
 | Datum | Datei | Zusammenfassung | Priorität |
 |-------|-------|-----------------|-----------|
+| **20.07.2026** | [CHANGELOG_2026-07-20.md](./CHANGELOG_2026-07-20.md) | 🔥 Firewall-Regel für Port 5000 (Web-Dashboard) ergänzt — Zugriff von ahmain war blockiert | 🟢 MINOR |
 | **15.07.2026** | [CHANGELOG_2026-07-15.md](./CHANGELOG_2026-07-15.md) | 🔧 Server-Neuaufsetzen (WS2022→WS2025): NTFS-Permission-Bug (Errno 13) + fehlender SSH-Zugriff für Git-Push behoben | 🔴 CRITICAL |
 | **22.05.2026** | [CHANGELOG_2026-05-21.md](./CHANGELOG_2026-05-21.md) | 📱 Responsive Design — Statusseite skaliert auf Desktop, Tablet, Smartphone, Z Fold | 🟢 MINOR |
 | **21.05.2026** | [CHANGELOG_2026-05-21.md](./CHANGELOG_2026-05-21.md) | 🌐 Tailscale VPN eingerichtet — externer Zugriff via `http://hauserver:5000` | 🟢 MINOR |
