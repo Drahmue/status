@@ -8,7 +8,8 @@ $ErrorActionPreference = "Continue"
 $env:PYTHONIOENCODING = "utf-8"
 
 # Directory and logging configuration
-$scriptDir = "\\HauServer\Dataserver\_Batchprozesse\status"
+# Ordner dieses Skripts (funktioniert lokal und per UNC, kein fester Pfad)
+$scriptDir = $PSScriptRoot
 $LOGDIR = "$scriptDir\logs"
 $LOGSTAMP = (Get-Date).ToString("yyyy-MM")
 $LOGFILE = "$LOGDIR\status_dsl_$LOGSTAMP.log"

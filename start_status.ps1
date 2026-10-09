@@ -8,7 +8,8 @@ $ErrorActionPreference = "Continue"
 $env:PYTHONIOENCODING = "utf-8"
 
 # Early error logging setup (before main script execution)
-$scriptDir = "\\HauServer\Dataserver\_Batchprozesse\status"
+# Ordner dieses Skripts (funktioniert lokal und per UNC, kein fester Pfad)
+$scriptDir = $PSScriptRoot
 $LOGDIR = "$scriptDir\logs"
 $LOGSTAMP = (Get-Date).ToString("yyyy-MM")
 $LOGFILE = "$LOGDIR\status_$LOGSTAMP.log"
@@ -26,9 +27,9 @@ if (Test-Path $notifyLib) {
 }
 
 # Network file paths to check
-$NETWORK_PATH = "\\HauServer\Dataserver"
-$REQUIRED_FILE1 = "\\HauServer\Dataserver\Dummy\Finance_Input\Instrumente.xlsx"
-$REQUIRED_FILE2 = "\\HauServer\Dataserver\Dummy\Finance_Input\bookings.xlsx"
+$NETWORK_PATH = "D:\Dataserver"
+$REQUIRED_FILE1 = "D:\Dataserver\Dummy\Finance_Input\Instrumente.xlsx"
+$REQUIRED_FILE2 = "D:\Dataserver\Dummy\Finance_Input\bookings.xlsx"
 
 # Network wait configuration: 3-5 minutes (60 attempts * 5 seconds = 5 minutes)
 $MAX_NETWORK_WAIT = 60
