@@ -193,7 +193,9 @@ This provides utility functions for logging, file operations, and configuration 
 - Dual speedtest support: Ookla CLI (preferred) + Python speedtest library fallback
 - Efficient Parquet-based historical data storage
 - Interactive data viewer with statistics and trend analysis
-- Support for specific server selection (Deutsche Telekom Frankfurt)
+- Preferred server: Deutsche Telekom Stuttgart (ID 74184); CLI auto-selection as fallback
+- Python-lib fallback never measures against servers abroad (skips measurement instead)
+- Results with ping > `max_ping_ms` (INI, default 1000) are discarded as measurement errors
 
 **Meter Monitoring (Electricity):**
 - Periodic polling of local Tasmota device via HTTP (no extra library, uses stdlib urllib)
@@ -253,6 +255,8 @@ Start-ScheduledTask -TaskName "Status Web App" -TaskPath "\AHSkripts\"
 - **CLAUDE.md** - This file: Development guidelines and project architecture overview
 - **DEPLOYMENT.md** - Comprehensive Windows Server deployment guide (Version 2.0, PowerShell-based)
 - **README.md** - Project overview and quick start guide
+- **CHANGELOG.md** - Master changelog with overview of all detail changelogs
+- **CHANGELOG_2026-10-12.md** - Gas meter removal, Wandlerfaktor, DSL speedtest server fix and history cleanup
 - **CHANGELOG_2025-10-22.md** - PowerShell migration, centralized logging, testing, and deployment
 - **CHANGELOG_2025-10-20.md** - UNC path problem resolution and initial PowerShell conversion
 - **CHANGELOG_2025-10-17.md** - Network wait logic implementation for reliable startup
@@ -399,3 +403,26 @@ Grants Modify recursively, additive to existing ACEs.
 - `DEPLOYMENT.md` §2.1 - Already specified Modify as minimum; ensure this is actually applied after any server/account rebuild
 - `TROUBLESHOOTING_STOCK_MONITORING.md` - Detailed diagnosis steps and verification commands
 - `CHANGELOG_2026-07-15.md` - Full incident writeup
+
+### DSL Speedtest Measuring Against Foreign Servers (Fixed: 2026-10-12)
+
+**Problem:**
+From 2026-09-30 on, the dashboard mostly showed speedtest results against servers abroad (e.g. "SWEET TV – Warsaw, Poland", 14 Mbit/s, 218 ms) instead of Deutsche Telekom.
+
+**Root Cause:**
+1. The preferred server Telekom Frankfurt (ID 31448) was removed by Ookla — the CLI failed with `No servers defined (NoServersException)` on every run.
+2. The script then fell back to the legacy Python lib `speedtest-cli 2.1.3`, whose server list from Ookla's legacy API only contains **10 servers in Poland**. Its sponsor/city filter found nothing and `get_best_server()` picked Warsaw.
+3. (Harmless side issue) Ookla CLI 1.2 does not support `--secure`, so the first CLI call per run always failed.
+
+**Fix Implemented:**
+- `status_dsl.ini`: `server_id = 74184` (Deutsche Telekom Stuttgart), `city = Stuttgart`
+- `perform_speedtest_cli()`: preferred server first, then CLI auto-selection (no `--server-id`); `--secure` removed
+- `perform_speedtest_py()`: filters relaxed stepwise (sponsor+city → sponsor → country); if no server in the configured country exists, the measurement is skipped instead of measuring abroad
+- New INI setting `max_ping_ms = 1000`: results above are discarded (pings up to 1,800,000 ms had been recorded)
+- `speedtest_data.parquet` cleaned: 1,532 foreign + 51 implausible-ping entries removed (backups in `_Archiv\`)
+
+**If it happens again:** list currently available servers with `ookla\speedtest.exe --accept-license --accept-gdpr --servers` and update `server_id`.
+
+**Related Files:**
+- `status_dsl.py`, `status_dsl.ini`
+- `CHANGELOG_2026-10-12.md` - Full incident writeup

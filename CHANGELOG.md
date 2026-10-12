@@ -1,7 +1,7 @@
 # CHANGELOG - Stock Monitoring System
 
 **Projekt:** Stock Portfolio Monitoring & DSL Speedtest System
-**Letzte Aktualisierung:** 14. September 2026
+**Letzte Aktualisierung:** 12. Oktober 2026
 **Version:** 2.2 (PowerShell-basiert)
 
 ---
@@ -480,6 +480,8 @@ Get-Content "D:\Dataserver\_Batchprozesse\status\status.log" -Tail 50 | Select-S
 
 | Datum | Datei | Zusammenfassung | Priorität |
 |-------|-------|-----------------|-----------|
+| **12.10.2026** | [CHANGELOG_2026-10-12.md](./CHANGELOG_2026-10-12.md) | 🔧 DSL-Speedtest maß gegen Server im Ausland (Telekom Frankfurt 31448 entfallen) — neuer Server Telekom Stuttgart 74184, robuster Fallback, Historie bereinigt (Ausland + Ping > 1000 ms) | 🟡 MAJOR |
+| **12.10.2026** | [CHANGELOG_2026-10-12.md](./CHANGELOG_2026-10-12.md) | 📊 Gaszähler stillgelegt und entfernt, Wandlerfaktor 20 für neuen Stromzähler | 🟢 MINOR |
 | **14.09.2026** | [CHANGELOG_2026-09-14.md](./CHANGELOG_2026-09-14.md) | 🔧 Nur 3/11 Kurse im Dashboard — degradierte yfinance-Session nach 3 Wochen Dauerbetrieb + fehlendes Error-Logging in `get_current_prices()` behoben | 🔴 CRITICAL |
 | **20.07.2026** | [CHANGELOG_2026-07-20.md](./CHANGELOG_2026-07-20.md) | 🔥 Firewall-Regel für Port 5000 (Web-Dashboard) ergänzt — Zugriff von ahmain war blockiert | 🟢 MINOR |
 | **15.07.2026** | [CHANGELOG_2026-07-15.md](./CHANGELOG_2026-07-15.md) | 🔧 Server-Neuaufsetzen (WS2022→WS2025): NTFS-Permission-Bug (Errno 13) + fehlender SSH-Zugriff für Git-Push behoben | 🔴 CRITICAL |
