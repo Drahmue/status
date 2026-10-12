@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Status Zaehler - Tasmota meter monitoring script
-Fetches gas and electricity meter readings from local Tasmota devices
+Fetches electricity meter readings from a local Tasmota device
 and exports them to static/zaehler.json for the web interface.
 """
 
@@ -64,8 +64,8 @@ def settings_import(settings_file, logfile=None):
     defaults = {
         "logfile": "status_zaehler.log",
         "json_output": os.path.join("static", "zaehler.json"),
-        "gas_url": "http://192.168.178.130/?m=1",
         "strom_url": "http://192.168.178.133/?m=1",
+        "strom_faktor": 1.0,
         "refresh_time": 300,
         "request_timeout": 10,
     }
@@ -87,8 +87,12 @@ def settings_import(settings_file, logfile=None):
     settings["json_output"] = normalize_path(files.get("json_output", defaults["json_output"]), base_dir)
 
     geraete = dict(cfg.items("Geraete")) if cfg.has_section("Geraete") else {}
-    settings["gas_url"] = geraete.get("gas_url", defaults["gas_url"]).strip()
     settings["strom_url"] = geraete.get("strom_url", defaults["strom_url"]).strip()
+    try:
+        settings["strom_faktor"] = float(geraete.get("strom_faktor", defaults["strom_faktor"]))
+    except (ValueError, TypeError):
+        screen_and_log(f"WARN: Ungültiger strom_faktor in INI. Nutze Default {defaults['strom_faktor']}.", logfile)
+        settings["strom_faktor"] = defaults["strom_faktor"]
 
     timing = dict(cfg.items("Timing")) if cfg.has_section("Timing") else {}
     try:
@@ -124,43 +128,27 @@ def fetch_tasmota(url, timeout=10, logfile=None):
         return None
 
 
-def parse_gas(raw, logfile=None):
-    """Parse gas meter data from Tasmota ?m=1 response"""
-    if not raw:
-        return None
-
-    result = {}
-
-    m = re.search(r'Zählerstand:\s*\{m\}\s*([\d.]+)\s*m³', raw)
-    if m:
-        result["zaehlerstand_m3"] = float(m.group(1))
-    else:
-        screen_and_log("WARN: Gaszählerstand nicht gefunden", logfile)
-        result["zaehlerstand_m3"] = None
-
-    return result
-
-
-def parse_strom(raw, logfile=None):
-    """Parse electricity meter data from Tasmota ?m=1 response"""
+def parse_strom(raw, strom_faktor=1.0, logfile=None):
+    """Parse electricity meter data from Tasmota ?m=1 response.
+    All raw values are multiplied by strom_faktor (Wandlerfaktor)."""
     if not raw:
         return None
 
     result = {}
 
     m = re.search(r'MT691 Total Consumed\{m\}([\d.]+)\s*kWh', raw)
-    result["bezug_kwh"] = float(m.group(1)) if m else None
+    result["bezug_kwh"] = round(float(m.group(1)) * strom_faktor, 3) if m else None
     if not m:
         screen_and_log("WARN: MT691 Total Consumed nicht gefunden", logfile)
 
     m = re.search(r'MT691 Total Delivered\{m\}([\d.]+)\s*kWh', raw)
-    result["einspeisung_kwh"] = float(m.group(1)) if m else None
+    result["einspeisung_kwh"] = round(float(m.group(1)) * strom_faktor, 3) if m else None
     if not m:
         screen_and_log("WARN: MT691 Total Delivered nicht gefunden", logfile)
 
     # Gesamtverbrauch (ohne P1/P2/P3 - erste Zeile ohne Phasenangabe)
     m = re.search(r'MT691 Current Consumption\{m\}(\d+)\s*W', raw)
-    result["aktuell_w"] = int(m.group(1)) if m else None
+    result["aktuell_w"] = int(round(int(m.group(1)) * strom_faktor)) if m else None
     if not m:
         screen_and_log("WARN: MT691 Current Consumption nicht gefunden", logfile)
 
@@ -168,25 +156,20 @@ def parse_strom(raw, logfile=None):
 
 
 def fetch_and_parse(settings, logfile):
-    """Fetch data from both Tasmota devices and return combined result"""
+    """Fetch data from the electricity meter and return result"""
     timeout = settings["request_timeout"]
-
-    screen_and_log(f"Rufe Gaszähler ab: {settings['gas_url']}", logfile)
-    gas_raw = fetch_tasmota(settings["gas_url"], timeout=timeout, logfile=logfile)
-    gas_data = parse_gas(gas_raw, logfile)
 
     screen_and_log(f"Rufe Stromzähler ab: {settings['strom_url']}", logfile)
     strom_raw = fetch_tasmota(settings["strom_url"], timeout=timeout, logfile=logfile)
-    strom_data = parse_strom(strom_raw, logfile)
+    strom_data = parse_strom(strom_raw, strom_faktor=settings["strom_faktor"], logfile=logfile)
 
-    if gas_data is None and strom_data is None:
-        screen_and_log("ERROR: Beide Geräte nicht erreichbar", logfile)
+    if strom_data is None:
+        screen_and_log("ERROR: Stromzähler nicht erreichbar", logfile)
         return None
 
     return {
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "gas": gas_data or {"zaehlerstand_m3": None},
-        "strom": strom_data or {"bezug_kwh": None, "einspeisung_kwh": None, "aktuell_w": None},
+        "strom": strom_data,
     }
 
 
@@ -220,6 +203,7 @@ def main():
 
         screen_and_log("Status Zaehler Monitoring gestartet", logfile)
         screen_and_log(f"Aktualisierungsintervall: {refresh_time} Sekunden", logfile)
+        screen_and_log(f"Wandlerfaktor Strom: {settings['strom_faktor']}", logfile)
 
         while True:
             try:
@@ -227,7 +211,6 @@ def main():
                 if data:
                     save_json(data, settings["json_output"], logfile)
                     screen_and_log(
-                        f"Gas: {data['gas'].get('zaehlerstand_m3')} m³ | "
                         f"Strom Bezug: {data['strom'].get('bezug_kwh')} kWh | "
                         f"Einspeisung: {data['strom'].get('einspeisung_kwh')} kWh | "
                         f"Aktuell: {data['strom'].get('aktuell_w')} W",

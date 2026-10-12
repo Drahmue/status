@@ -221,11 +221,6 @@
     <h3 style="margin-top: 0;">Zählerstände</h3>
     <div id="zaehler-data">
       <div class="speedtest-data">
-        <div>Gas Zählerstand</div>
-        <div class="speedtest-value" id="gas-zaehlerstand">--</div>
-        <div class="speedtest-unit">m³</div>
-      </div>
-      <div class="speedtest-data">
         <div>Strom Bezug</div>
         <div class="speedtest-value" id="strom-bezug">--</div>
         <div class="speedtest-unit">kWh</div>
@@ -256,11 +251,8 @@
           return response.json();
         })
         .then(data => {
-          const gas = data.gas || {};
           const strom = data.strom || {};
 
-          document.getElementById('gas-zaehlerstand').textContent =
-            gas.zaehlerstand_m3 != null ? gas.zaehlerstand_m3.toFixed(2) : '--';
           document.getElementById('strom-bezug').textContent =
             strom.bezug_kwh != null ? strom.bezug_kwh.toFixed(0) : '--';
           document.getElementById('strom-einspeisung').textContent =
@@ -276,7 +268,7 @@
         })
         .catch(error => {
           console.log('Zaehler data not available:', error);
-          ['gas-zaehlerstand', 'strom-bezug', 'strom-einspeisung', 'strom-aktuell'].forEach(id => {
+          ['strom-bezug', 'strom-einspeisung', 'strom-aktuell'].forEach(id => {
             document.getElementById(id).textContent = '--';
           });
           document.getElementById('zaehler-timestamp').textContent = 'Nicht verfügbar';

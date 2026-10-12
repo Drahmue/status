@@ -1,5 +1,5 @@
 # Zaehler Monitoring Service Starter - PowerShell Version
-# Starts status_zaehler.py for continuous gas and electricity meter monitoring
+# Starts status_zaehler.py for continuous electricity meter monitoring
 
 $ErrorActionPreference = "Continue"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
