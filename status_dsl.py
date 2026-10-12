@@ -73,10 +73,11 @@ def settings_import(settings_file, logfile=None, screen=True):
         "cli_path": "",
         "use_ookla_cli": True,
         "secure": True,
-        "server_id": "31448",  # Telekom Frankfurt
+        "server_id": "74184",  # Deutsche Telekom Stuttgart
         "sponsor": "Telekom",
-        "city": "Frankfurt",
+        "city": "Stuttgart",
         "country": "Germany",
+        "max_ping_ms": 1000.0,  # results above are treated as measurement errors
         "refresh_time": 300,  # 5 minutes default
     }
 
@@ -109,6 +110,10 @@ def settings_import(settings_file, logfile=None, screen=True):
         "city": (speedtest_section.get("city", defaults["city"]) or "").strip(),
         "country": (speedtest_section.get("country", defaults["country"]) or "").strip(),
     }
+    try:
+        settings["speedtest"]["max_ping_ms"] = float(speedtest_section.get("max_ping_ms", defaults["max_ping_ms"]))
+    except (ValueError, TypeError):
+        settings["speedtest"]["max_ping_ms"] = defaults["max_ping_ms"]
 
     # Timing section
     timing_section = dict(cfg.items("Timing")) if cfg.has_section("Timing") else {}
@@ -442,6 +447,17 @@ def run_single_speedtest(settings, logfile):
 
     if not results:
         screen_and_log("ERROR: DSL-Speedtest fehlgeschlagen.", logfile)
+        return False
+
+    # Discard implausible results (measurement errors, e.g. ping of 1,800,000 ms)
+    max_ping_ms = speed_cfg.get("max_ping_ms")
+    ping_ms = results.get("ping_ms")
+    if max_ping_ms and ping_ms is not None and ping_ms > max_ping_ms:
+        screen_and_log(
+            f"WARN: Unplausibler Ping {ping_ms} ms (> {max_ping_ms} ms) – Messung verworfen "
+            f"(Server: {results.get('server_name')} – {results.get('server_location')})",
+            logfile
+        )
         return False
 
     # Save results to both JSON and Parquet
