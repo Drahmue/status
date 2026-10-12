@@ -152,13 +152,13 @@ def perform_speedtest_cli(cli_path, logfile, screen=True, server_id=None, secure
             pass
 
         base_cmd = [cli_path, "--accept-license", "--accept-gdpr", "--format=json"]
-        if server_id:
-            base_cmd += ["--server-id", str(server_id)]
 
-        # Try with --secure first, then without
+        # Try preferred server first, then CLI auto-selection (picks nearby servers,
+        # unlike the Python lib's global best_server()).
+        # Note: Ookla CLI 1.2 does not support --secure, so 'secure' only applies to the Python lib.
         cmd_variants = []
-        if secure:
-            cmd_variants.append(base_cmd + ["--secure"])
+        if server_id:
+            cmd_variants.append(base_cmd + ["--server-id", str(server_id)])
         cmd_variants.append(base_cmd[:])
 
         for cmd in cmd_variants:
@@ -218,7 +218,7 @@ def perform_speedtest_py(logfile, screen=True, server_id=None, sponsor=None, cit
         screen_and_log(tb, logfile, screen)
 
     sponsor_filter = (sponsor or "").strip() or "Telekom"
-    city_filter = (city or "").strip() or "Frankfurt"
+    city_filter = (city or "").strip()
     country_filter = (country or "").strip()
 
     screen_and_log("DSL-Speedtest beginnt...", logfile, screen)
@@ -252,34 +252,57 @@ def perform_speedtest_py(logfile, screen=True, server_id=None, sponsor=None, cit
                 st = speedtest.Speedtest(secure=bool(secure))
                 st.get_config()
                 st.get_servers()
-                candidates = []
-                for srv_list in st.servers.values():
-                    for srv in srv_list:
-                        sponsor_lc = (srv.get("sponsor", "") or "").lower()
-                        city_lc = (srv.get("name", "") or "").lower()
-                        country_lc = (srv.get("country", "") or "").lower()
+                all_servers = [srv for srv_list in st.servers.values() for srv in srv_list]
+
+                def matches(srv, use_sponsor, use_city):
+                    sponsor_lc = (srv.get("sponsor", "") or "").lower()
+                    city_lc = (srv.get("name", "") or "").lower()
+                    country_lc = (srv.get("country", "") or "").lower()
+                    sponsor_ok = True
+                    if use_sponsor:
                         sponsor_ok = bool(re.search(r'\b(deutsche\s+)?telekom\b', sponsor_lc))
                         if sponsor_filter:
                             sponsor_ok = sponsor_ok and (sponsor_filter.lower() in sponsor_lc or sponsor_filter.lower() == "telekom")
-                        city_ok = (city_filter.lower() in city_lc) if city_filter else True
-                        country_ok = (country_filter.lower() in country_lc) if country_filter else True
-                        if sponsor_ok and city_ok and country_ok:
-                            candidates.append(srv)
-                if candidates:
+                    city_ok = (city_filter.lower() in city_lc) if (use_city and city_filter) else True
+                    country_ok = (country_filter.lower() in country_lc) if country_filter else True
+                    return sponsor_ok and city_ok and country_ok
+
+                # Relax filters step by step, but never leave the configured country
+                filter_stages = [
+                    (True, True, f"{sponsor_filter}/{city_filter or '*'}/{country_filter or '*'}"),
+                    (True, False, f"{sponsor_filter}/{country_filter or '*'}"),
+                    (False, False, f"Land {country_filter or '*'}"),
+                ]
+                for use_sponsor, use_city, stage_label in filter_stages:
+                    candidates = [srv for srv in all_servers if matches(srv, use_sponsor, use_city)]
+                    if not candidates:
+                        screen_and_log(f"WARN: Kein Server für Filter '{stage_label}' gefunden", logfile, screen)
+                        continue
                     ids = [int(s["id"]) for s in candidates if "id" in s]
                     st.get_servers(ids)
                     best_server = st.get_best_server()
                     screen_and_log(
-                        f"Telekom/Frankfurt-Server gewählt: {best_server['sponsor']} – "
+                        f"Server gewählt (Filter '{stage_label}'): {best_server['sponsor']} – "
                         f"{best_server['name']}, {best_server['country']} (ID {best_server.get('id')})",
                         logfile, screen
                     )
-                else:
-                    screen_and_log("WARN: Kein Telekom-Server in Frankfurt gefunden – Fallback auf best_server()", logfile, screen)
+                    break
+                if not best_server:
+                    screen_and_log("WARN: Kein passender Server gefunden", logfile, screen)
             except Exception as e:
                 log_exception("WARN: Sponsor/City-Filter fehlgeschlagen", e)
 
-        # Fallback to best server
+        # A server abroad gives misleading results (the legacy server list of the
+        # Python lib may only contain foreign servers) - better skip the measurement
+        if not best_server and country_filter:
+            screen_and_log(
+                f"ERROR: Kein Server in '{country_filter}' verfügbar – Messung übersprungen "
+                f"(kein Fallback auf Server im Ausland)",
+                logfile, screen
+            )
+            return None
+
+        # Fallback to best server (only if no country filter configured)
         if not best_server:
             try:
                 st = speedtest.Speedtest(secure=bool(secure))
