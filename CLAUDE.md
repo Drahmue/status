@@ -172,13 +172,13 @@ This is a comprehensive monitoring system combining stock portfolio tracking wit
 ### External Dependencies
 
 The system depends on a shared standard library located at:
-`\\WIN-H7BKO5H0RMC\Dataserver\Programmier Projekte\Python\Standardbibliothek\Standardfunktionen_aktuell.py`
+`\\HauServer\Dataserver\Programmier Projekte\Python\Standardbibliothek\Standardfunktionen_aktuell.py`
 
 This provides utility functions for logging, file operations, and configuration management.
 
 **External Data Sources:**
-- Instrument definitions: `\\WIN-H7BKO5H0RMC\Dataserver\Dummy\Finance_Input\Instrumente.xlsx`
-- Transaction history: `\\WIN-H7BKO5H0RMC\Dataserver\Dummy\Finance_Input\bookings.xlsx`
+- Instrument definitions: `D:\Dataserver\Dummy\Finance_Input\Instrumente.xlsx`
+- Transaction history: `D:\Dataserver\Dummy\Finance_Input\bookings.xlsx`
 
 ### Key Features
 
@@ -350,7 +350,7 @@ Set `ExecutionTimeLimit = PT0S` (no limit) on the Stock Monitoring Service task:
 $task = Get-ScheduledTask -TaskName "Stock Monitoring Service" -TaskPath "\AHSkripts\"
 $task.Settings.ExecutionTimeLimit = "PT0S"
 Set-ScheduledTask -TaskName "Stock Monitoring Service" -TaskPath "\AHSkripts\" `
-    -Settings $task.Settings -User "WIN-H7BKO5H0RMC\Service" -Password $pw
+    -Settings $task.Settings -User "HauServer\Service" -Password $pw
 ```
 
 **Related Files:**
