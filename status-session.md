@@ -11,14 +11,16 @@ Lokales `main` lag 21 Commits hinter `origin/main`. Drei Dateien waren geändert
 ## Entscheidungen & Erkenntnisse
 - Der Remote hatte die Umbenennung auf HauServer schon erledigt. `status.ini` nutzt lokale `D:\`-Pfade statt UNC, und `Setup-TaskScheduler-Fixed.ps1` wurde gelöscht. Deshalb waren die lokalen Änderungen überflüssig.
 - Lokal und Remote sind jetzt gleich, und es gibt keine offenen Änderungen mehr.
-- Der alte Servername steht noch in mehreren Dokus, die gepflegt werden (siehe ST-01).
+- In den gepflegten Dokus stand noch der alte Servername (ST-01, in derselben Session erledigt).
 
 ## Verworfene Ansätze
 - `git stash` für die lokalen Änderungen: nicht nötig, weil der Remote sie schon abdeckt.
 - `\\HauServer\...` für die Excel-Quellen in `CLAUDE.md`: Stattdessen `D:\`, passend zu `status.ini`.
 
+- ST-01 erledigt: Der alte Servername ist aus allen gepflegten Dokus entfernt. Nur die historischen `CHANGELOG_*.md` und `_Archiv` enthalten ihn noch.
+
 ## Nächster Schritt beim Wiederaufnehmen
-ST-01: In `DEPLOYMENT.md` und den Troubleshooting-Dokus `WIN-H7BKO5H0RMC` auf `HauServer` umstellen.
+Keine offenen Aufgaben. Neue Themen nach Bedarf.
 
 ## Noch offene Punkte
-- ST-01 (Doku-Bereinigung, alter Servername)
+- keine

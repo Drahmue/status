@@ -26,7 +26,7 @@ The deployment consists of 3 automated services running as PowerShell scripts:
 
 - Windows Server with Administrator access
 - Python 3.8+ installed with virtual environment
-- Git repository cloned to `\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status`
+- Git repository cloned to `D:\Dataserver\_Batchprozesse\status`
 - Service account configured on the server (e.g., "Service")
 - Service account password available for task registration
 - Required Python packages installed in virtual environment
@@ -83,17 +83,17 @@ Ensure these PowerShell scripts are present:
 
 ```powershell
 # Create logs directory if not exists
-New-Item -Path "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\logs" -ItemType Directory -Force
+New-Item -Path "D:\Dataserver\_Batchprozesse\status\logs" -ItemType Directory -Force
 
 # Create static directory if not exists
-New-Item -Path "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\static" -ItemType Directory -Force
+New-Item -Path "D:\Dataserver\_Batchprozesse\status\static" -ItemType Directory -Force
 ```
 
 ## Step 2: Service Account Permissions
 
 ### 2.1 Grant Folder Permissions
 
-1. Navigate to `\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status`
+1. Navigate to `D:\Dataserver\_Batchprozesse\status`
 2. Right-click → **Properties** → **Security** tab
 3. Click **"Edit..."** → **"Add..."**
 4. Enter `Service` → **"Check Names"** → **OK**
@@ -127,14 +127,14 @@ See `CLAUDE.md` → "NTFS Permission Bug After Server Rebuild" and `TROUBLESHOOT
 ### 2.3 Network Share Access
 
 Ensure `Service` account has access to:
-- `\\WIN-H7BKO5H0RMC\Dataserver\` (network share root)
-- `\\WIN-H7BKO5H0RMC\Dataserver\Dummy\Finance_Input\Instrumente.xlsx`
-- `\\WIN-H7BKO5H0RMC\Dataserver\Dummy\Finance_Input\bookings.xlsx`
+- `D:\Dataserver\` (data root on HauServer)
+- `D:\Dataserver\Dummy\Finance_Input\Instrumente.xlsx`
+- `D:\Dataserver\Dummy\Finance_Input\bookings.xlsx`
 
 **Test network access:**
 ```powershell
 # Run as Service account
-Test-Path "\\WIN-H7BKO5H0RMC\Dataserver\Dummy\Finance_Input\Instrumente.xlsx"
+Test-Path "D:\Dataserver\Dummy\Finance_Input\Instrumente.xlsx"
 # Should return: True
 ```
 
@@ -186,7 +186,7 @@ Set-ExecutionPolicy RemoteSigned -Scope LocalMachine
 - **Program/script:** `powershell.exe`
 - **Add arguments:**
   ```
-  -ExecutionPolicy Bypass -File "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\start_app.ps1"
+  -ExecutionPolicy Bypass -File "D:\Dataserver\_Batchprozesse\status\start_app.ps1"
   ```
 - **Start in:** (leave empty - PowerShell handles UNC paths)
 - **OK**
@@ -225,7 +225,7 @@ Set-ExecutionPolicy RemoteSigned -Scope LocalMachine
 - **Program/script:** `powershell.exe`
 - **Add arguments:**
   ```
-  -ExecutionPolicy Bypass -File "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\start_status.ps1"
+  -ExecutionPolicy Bypass -File "D:\Dataserver\_Batchprozesse\status\start_status.ps1"
   ```
 - **Start in:** (leave empty)
 
@@ -256,7 +256,7 @@ Set-ExecutionPolicy RemoteSigned -Scope LocalMachine
 - **Program/script:** `powershell.exe`
 - **Add arguments:**
   ```
-  -ExecutionPolicy Bypass -File "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\start_status_dsl.ps1"
+  -ExecutionPolicy Bypass -File "D:\Dataserver\_Batchprozesse\status\start_status_dsl.ps1"
   ```
 - **Start in:** (leave empty)
 
@@ -311,7 +311,7 @@ _Archiv\test_as_service_with_password.ps1
 
 2. **Navigate to the script directory:**
    ```powershell
-   cd "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status"
+   cd "D:\Dataserver\_Batchprozesse\status"
    ```
 
 3. **Run the test script:**
@@ -354,7 +354,7 @@ Log file: logs\service_test_2025-10-22_100309.log
 
 ```powershell
 # View latest test log
-$latestTestLog = Get-ChildItem "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\logs\service_test_*.log" |
+$latestTestLog = Get-ChildItem "D:\Dataserver\_Batchprozesse\status\logs\service_test_*.log" |
     Sort-Object LastWriteTime -Descending |
     Select-Object -First 1
 
@@ -400,26 +400,26 @@ Get-Process python -ErrorAction SilentlyContinue | Measure-Object | Select-Objec
 **Starter Script Logs (in `logs\` directory):**
 ```powershell
 # Check Flask Web App log
-Get-Content "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\logs\app_2025-10.log" -Tail 10
+Get-Content "D:\Dataserver\_Batchprozesse\status\logs\app_2025-10.log" -Tail 10
 
 # Check DSL Speedtest log
-Get-Content "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\logs\status_dsl_2025-10.log" -Tail 10
+Get-Content "D:\Dataserver\_Batchprozesse\status\logs\status_dsl_2025-10.log" -Tail 10
 
 # Check Stock Monitoring log
-Get-Content "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\logs\status_2025-10.log" -Tail 10
+Get-Content "D:\Dataserver\_Batchprozesse\status\logs\status_2025-10.log" -Tail 10
 ```
 
 **Expected log entries:**
 ```
 [2025-10-22 10:35:31] Starting Flask Web Application
 [2025-10-22 10:35:31] Running as user: Service
-[2025-10-22 10:35:31] Changed directory to: \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status
+[2025-10-22 10:35:31] Changed directory to: D:\Dataserver\_Batchprozesse\status
 [2025-10-22 10:35:31] Starting Flask application (app.py)...
 ```
 
 **Check Error Logs (if any):**
 ```powershell
-Get-ChildItem "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\logs\*_errors_*.log" -ErrorAction SilentlyContinue
+Get-ChildItem "D:\Dataserver\_Batchprozesse\status\logs\*_errors_*.log" -ErrorAction SilentlyContinue
 # Should return: Nothing (no error logs = no errors)
 ```
 
@@ -438,9 +438,9 @@ Get-ChildItem "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\logs\*_errors_
 
 ```powershell
 # Check JSON output files
-Get-Item "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\static\depotdaten.json" | Select-Object Name, Length, LastWriteTime
+Get-Item "D:\Dataserver\_Batchprozesse\status\static\depotdaten.json" | Select-Object Name, Length, LastWriteTime
 
-Get-Item "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\static\speedtest.json" | Select-Object Name, Length, LastWriteTime
+Get-Item "D:\Dataserver\_Batchprozesse\status\static\speedtest.json" | Select-Object Name, Length, LastWriteTime
 
 # Files should be recently updated
 ```
@@ -466,10 +466,10 @@ Get-Item "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\static\speedtest.js
 **Manual Monitoring:**
 ```powershell
 # View current month logs
-Get-ChildItem "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\logs" -Filter "*_2025-10.log"
+Get-ChildItem "D:\Dataserver\_Batchprozesse\status\logs" -Filter "*_2025-10.log"
 
 # Check log sizes
-Get-ChildItem "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\logs" |
+Get-ChildItem "D:\Dataserver\_Batchprozesse\status\logs" |
     Select-Object Name, @{Name="SizeMB";Expression={[math]::Round($_.Length/1MB, 2)}} |
     Sort-Object SizeMB -Descending
 ```
@@ -502,7 +502,7 @@ Get-ScheduledTask -TaskPath "\AHSkripts\" | Select-Object TaskName, State, LastR
 Get-Process python -ErrorAction SilentlyContinue | Select-Object Id, ProcessName, StartTime, CPU
 
 # Check recent log updates
-Get-ChildItem "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\logs\*_2025-*.log" |
+Get-ChildItem "D:\Dataserver\_Batchprozesse\status\logs\*_2025-*.log" |
     Select-Object Name, LastWriteTime |
     Sort-Object LastWriteTime -Descending
 ```
@@ -518,13 +518,13 @@ Get-ScheduledTask -TaskPath "\AHSkripts\" | Select-Object TaskName, State | Form
 # 2. Log Files
 Write-Host "Recent Log Activity:" -ForegroundColor Yellow
 $currentMonth = Get-Date -Format "yyyy-MM"
-Get-ChildItem "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\logs" -Filter "*_$currentMonth.log" |
+Get-ChildItem "D:\Dataserver\_Batchprozesse\status\logs" -Filter "*_$currentMonth.log" |
     Select-Object Name, @{Name="SizeKB";Expression={[math]::Round($_.Length/1KB, 2)}}, LastWriteTime |
     Format-Table
 
 # 3. Data Files
 Write-Host "Data File Updates:" -ForegroundColor Yellow
-Get-Item "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status\static\*.json" |
+Get-Item "D:\Dataserver\_Batchprozesse\status\static\*.json" |
     Select-Object Name, LastWriteTime |
     Format-Table
 
@@ -556,7 +556,7 @@ Write-Host "`n=== Check Complete ===" -ForegroundColor Cyan
 **Solutions:**
 1. Verify Service account has network share access
 2. Check NTFS permissions on network share
-3. Test manually: `Test-Path "\\WIN-H7BKO5H0RMC\Dataserver"`
+3. Test manually: `Test-Path "D:\Dataserver"`
 4. Ensure network is available before tasks start (use delays)
 
 ### 7.3 Python Script Errors
@@ -580,7 +580,7 @@ Write-Host "`n=== Check Complete ===" -ForegroundColor Cyan
    $MAX_NETWORK_WAIT = 60  # Increase from 60 to 120
    ```
 2. Increase Task Scheduler startup delay (currently 2 minutes)
-3. Check network share is online: `\\WIN-H7BKO5H0RMC\Dataserver`
+3. Check data drive is available: `D:\Dataserver`
 4. Verify Excel files exist at expected paths
 
 ### 7.5 Port 5000 Already in Use
@@ -738,7 +738,7 @@ Register-ScheduledTask -Xml (Get-Content "D:\Backups\Status Web App.xml" | Out-S
 
 2. **Pull latest code:**
    ```cmd
-   cd \\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status
+   cd D:\Dataserver\_Batchprozesse\status
    git pull origin main
    ```
 

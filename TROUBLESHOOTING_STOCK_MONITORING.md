@@ -195,7 +195,7 @@ $task = Get-ScheduledTask -TaskName "Stock Monitoring Service" -TaskPath "\AHSkr
 $task.Settings.ExecutionTimeLimit = "PT0S"
 $pw = Read-Host "Passwort für Service-Account" -AsSecureString
 $pwPlain = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($pw))
-Set-ScheduledTask -TaskName "Stock Monitoring Service" -TaskPath "\AHSkripts\" -Settings $task.Settings -User "WIN-H7BKO5H0RMC\Service" -Password $pwPlain
+Set-ScheduledTask -TaskName "Stock Monitoring Service" -TaskPath "\AHSkripts\" -Settings $task.Settings -User "HauServer\Service" -Password $pwPlain
 ```
 
 **Hinweis:** DSL Speedtest Monitoring und Status Web App hatten bereits `PT0S`, waren nicht betroffen.
@@ -209,9 +209,9 @@ Set-ScheduledTask -TaskName "Stock Monitoring Service" -TaskPath "\AHSkripts\" -
 **Diagnose:**
 ```powershell
 # Netzwerk-Verfügbarkeit testen
-Test-Path "\\WIN-H7BKO5H0RMC\Dataserver"
-Test-Path "\\WIN-H7BKO5H0RMC\Dataserver\Dummy\Finance_Input\Instrumente.xlsx"
-Test-Path "\\WIN-H7BKO5H0RMC\Dataserver\Dummy\Finance_Input\bookings.xlsx"
+Test-Path "D:\Dataserver"
+Test-Path "D:\Dataserver\Dummy\Finance_Input\Instrumente.xlsx"
+Test-Path "D:\Dataserver\Dummy\Finance_Input\bookings.xlsx"
 ```
 
 **Lösungen:**

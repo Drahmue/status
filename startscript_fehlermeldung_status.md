@@ -29,7 +29,7 @@ Jedes Projektverzeichnis enthaelt seine eigene Kopie der Benachrichtigungsdateie
 | `logs/status_dsl_YYYY-MM.log` | Monatlich rotierendes Logfile für status_dsl.py |
 
 **Projektverzeichnis:** `D:\Dataserver\_Batchprozesse\status`
-**UNC-Pfad (Task Scheduler):** `\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status`
+**UNC-Pfad (Netzwerk):** `\\HauServer\Dataserver\_Batchprozesse\status`
 **Python:** `.venv\Scripts\python.exe`
 
 ## Unterschied zu Depot
@@ -52,7 +52,7 @@ Gleiche Konfiguration wie Depot und MyFitnessPal_Sync:
 - Telegram aktiv (`notify_telegram: true`)
 - Email deaktiviert (`notify_email: false`)
 - Empfaenger: `leo@haunschild-family.de`, `ah@haunschild-family.de`
-- Computername: `WIN-H7BKO5H0RMC`
+- Computername: `HauServer`
 
 ### 3. .gitignore aktualisiert
 
@@ -160,7 +160,11 @@ if ($notifyAvailable) {
 
 ## Hinweis: UNC-Pfad und $notifyLib
 
-Die Status-Skripte verwenden `$scriptDir = "\\WIN-H7BKO5H0RMC\Dataserver\_Batchprozesse\status"`
+> **Stand 2026-10:** Überholt. Die Start-Skripte verwenden inzwischen `$scriptDir = $PSScriptRoot`
+> und lokale `D:\`-Pfade (Commit 70554e3); die Benachrichtigung läuft über die zentrale
+> Telegram-Bibliothek (CS-028). Ursprünglicher Text:
+
+Die Status-Skripte verwendeten `$scriptDir = "\\HauServer\Dataserver\_Batchprozesse\status"`
 (hartkodierter UNC-Pfad, anders als Depot mit `$PSScriptRoot`).
 
 `Join-Path $scriptDir "Send-ErrorNotification.ps1"` ergibt daher den UNC-Pfad
@@ -190,7 +194,7 @@ Send-ErrorNotification -ScriptName "start_status" -ExitCode 1 -ErrorMessage "Das
   "telegram_chat_id":   "CHAT_ID",
   "notify_email":       false,
   "notify_telegram":    true,
-  "computername":       "WIN-H7BKO5H0RMC"
+  "computername":       "HauServer"
 }
 ```
 

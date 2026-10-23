@@ -61,7 +61,7 @@ Das System besteht aus drei Hauptkomponenten, die als Windows Task Scheduler Tas
 ### Bekannte Limitierungen
 - yfinance API: 1 Ticker (EUN4.DE) liefert keine Daten (delisted)
 - Netzwerkfreigaben: 5-Minuten Timeout beim Start (falls Netzwerk nicht verfügbar)
-- Excel-Dateien: Liegen auf Netzwerkfreigabe `\\WIN-H7BKO5H0RMC\Dataserver\`
+- Excel-Dateien: Liegen lokal auf HauServer unter `D:\Dataserver\`
 
 ### Letzte erfolgreiche Änderung
 - **Datum:** 30.10.2025
@@ -351,9 +351,9 @@ Write-Host "`n✅ Verifizierung abgeschlossen!" -ForegroundColor Green
 
 | Ressource | Pfad | Beschreibung |
 |-----------|------|--------------|
-| Standard-Bibliothek | `\\WIN-H7BKO5H0RMC\Dataserver\Programmier Projekte\Python\Standardbibliothek\Standardfunktionen_aktuell.py` | ahlib (Logging, File-Ops) |
-| Instrumente Excel | `\\WIN-H7BKO5H0RMC\Dataserver\Dummy\Finance_Input\Instrumente.xlsx` | Ticker, WKN, Namen |
-| Buchungen Excel | `\\WIN-H7BKO5H0RMC\Dataserver\Dummy\Finance_Input\bookings.xlsx` | Transaktionshistorie |
+| Standard-Bibliothek | `\\HauServer\Dataserver\Programmier Projekte\Python\Standardbibliothek\Standardfunktionen_aktuell.py` | ahlib (Logging, File-Ops) |
+| Instrumente Excel | `D:\Dataserver\Dummy\Finance_Input\Instrumente.xlsx` | Ticker, WKN, Namen |
+| Buchungen Excel | `D:\Dataserver\Dummy\Finance_Input\bookings.xlsx` | Transaktionshistorie |
 
 ---
 
