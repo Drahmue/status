@@ -106,6 +106,103 @@ def bookings_check_for_instruments(bookings, instruments):
     return missing_in_instruments
 
 
+class SharesDaySource:
+    """Stueckzahlen je Tag und WKN aus shares_day.xlsx (schreibt der Task 'Depot Script Daily Fixed'
+    taeglich 05:00 mit denselben Funktionen shares_from_bookings + aggregate_banks).
+    Ersetzt die eigene Berechnung beim Start, die nur bis Start + 30 Tage reichte (DH-050).
+    Format der Datei: Spalte 'date', danach eine Spalte je WKN."""
+
+    # depot schreibt die Datei in mehreren Schritten (Export, Tabellenformat, Spaltenformat):
+    # erst lesen, wenn sie so lange unveraendert ist
+    SETTLE_SECONDS = 120
+
+    def __init__(self, filename, instruments_df, logfile, max_age_hours=30):
+        self.filename = filename
+        self.instruments_df = instruments_df
+        self.logfile = logfile
+        self.max_age_hours = max_age_hours
+        self.df = None
+        self.mtime = None
+        self.stale_warned_mtime = None
+        self.read_error_warned_mtime = None
+
+    def _read(self):
+        df = pd.read_excel(self.filename)
+        if "date" not in df.columns:
+            raise ValueError("Spalte 'date' fehlt")
+        df["date"] = pd.to_datetime(df["date"]).dt.normalize()
+        df = df.set_index("date").sort_index()
+        df.columns = [str(c).strip().lower() for c in df.columns]
+        df = df.apply(pd.to_numeric, errors="coerce").fillna(0.0)
+        if df.empty:
+            raise ValueError("keine Zeilen")
+        return df
+
+    def refresh(self, force=False):
+        """Liest die Datei neu, wenn sich der Zeitstempel geaendert hat. True = neue Daten geladen.
+        Bei Lesefehler bleiben die bisherigen Daten erhalten."""
+        try:
+            mtime = os.path.getmtime(self.filename)
+        except OSError as e:
+            screen_and_log(f"WARNING: shares_day nicht erreichbar ({self.filename}): {e}", self.logfile, screen=False)
+            return False
+
+        if not force and mtime == self.mtime:
+            return False
+        if not force and time.time() - mtime < self.SETTLE_SECONDS:
+            return False  # wird evtl. gerade geschrieben, naechste Runde
+
+        try:
+            df = self._read()
+        except Exception as e:
+            if self.read_error_warned_mtime != mtime:
+                screen_and_log(f"WARNING: shares_day nicht lesbar, behalte bisherigen Stand: {e}", self.logfile, screen=False)
+                self.read_error_warned_mtime = mtime
+            return False
+
+        self.df = df
+        self.mtime = mtime
+        unknown = sorted(set(df.columns) - set(self.instruments_df.index))
+        if unknown:
+            screen_and_log(f"WARNING: WKNs aus shares_day fehlen in Instruments (werden nicht bewertet): {unknown}",
+                           self.logfile, screen=False)
+        screen_and_log(
+            f"Info: shares_day geladen: {len(df.columns)} WKN, {df.index.min():%d.%m.%Y}-{df.index.max():%d.%m.%Y}, "
+            f"Datei vom {datetime.fromtimestamp(mtime):%d.%m.%Y %H:%M}", self.logfile, screen=False)
+        return True
+
+    def check_stale(self):
+        """Warnt einmal je Dateistand, wenn die Datei aelter als max_age_hours ist (depot ausgefallen?)."""
+        if self.mtime is None:
+            return
+        age_h = (time.time() - self.mtime) / 3600
+        if age_h > self.max_age_hours and self.stale_warned_mtime != self.mtime:
+            screen_and_log(
+                f"WARNING: shares_day ist {age_h:.0f} h alt (Grenze {self.max_age_hours} h) - "
+                f"Task 'Depot Script Daily Fixed' pruefen; Stueckzahlen ohne neue Buchungen", self.logfile, screen=False)
+            self.stale_warned_mtime = self.mtime
+
+    def shares_for(self, date):
+        """Stueckzahlen fuer `date` als DataFrame (Index wkn, Spalte 'share'), Form wie bisher
+        shares_day_df.loc[date]. Fehlt der Tag (Datei endet am letzten Kurstag), gilt die letzte Zeile davor."""
+        if self.df is None:
+            return None
+        date = pd.Timestamp(date).normalize()
+        available = self.df.index[self.df.index <= date]
+        if available.empty:
+            return None
+        used = available.max()
+        if used != date:
+            screen_and_log(f"Info: shares_day ohne {date:%d.%m.%Y}, verwende Stand {used:%d.%m.%Y}",
+                           self.logfile, screen=False)
+        row = self.df.loc[used]
+        result = row.to_frame("share")
+        result.index.name = "wkn"
+        return result
+
+
+# Die folgenden Buchungsfunktionen nutzt main() seit DH-050 nicht mehr (Stueckzahlen aus shares_day.xlsx);
+# sie bleiben fuer die Testskripte test_*.py erhalten.
 def shares_from_bookings(bookings, end_date, logfile, screen=False):
     """Erweitert den DataFrame `bookings` mit allen Kombinationen von Datum, wkn und Bank bis zu einem angegebenen Enddatum und berechnet die laufende Summe."""
     all_dates = pd.date_range(bookings.index.get_level_values('date').min(), end_date)
@@ -296,8 +393,8 @@ def initializing(settings_file, screen):
         function_result("Initialisierung", error_count, warning_count, logfile=None, screen=screen)
         return None
 
-    # Nur Instruments und Bookings prüfen, prices.parquet wird nicht mehr benötigt
-    required_files = [settings['Files']['instruments'], settings['Files']['bookings']]
+    # Instruments und shares_day (von depot erzeugt) pruefen; Buchungen braucht status seit DH-050 nicht mehr
+    required_files = [settings['Files']['instruments'], settings['Files']['shares_day']]
     if not files_availability_check(required_files, logger=logger):
         screen_and_log("ERROR: Eine oder mehrere Dateien fehlen.", logfile, screen=screen)
         error_count += 1
@@ -404,15 +501,22 @@ def get_last_trading_day_of_previous_month():
     return None
 
 
-def run_monitor(instruments_df, shares_day_df, shares_yesterday, reference_date, logfile, settings, reference_date_month=None):
+def run_monitor(instruments_df, shares_source, shares_yesterday, reference_date, logfile, settings, reference_date_month=None):
     """Hauptschleife für das Monitoring"""
     current_last_trading_day = reference_date
     current_last_trading_day_month = reference_date_month
     current_shares_yesterday = shares_yesterday
-    
+
     while True:
         refresh_time = settings.get("Timing", {}).get("refresh_time", 60)
         try:
+            # Neuer Stand von shares_day.xlsx (depot 05:00)? Dann Stueckzahlen zum aktuellen Referenztag neu holen
+            if shares_source.refresh():
+                updated = shares_source.shares_for(current_last_trading_day)
+                if updated is not None:
+                    current_shares_yesterday = updated
+            shares_source.check_stale()
+
             # Prüfe, ob sich der letzte Handelstag geändert hat
             new_last_trading_day = get_last_trading_day()
             new_last_trading_day_month = get_last_trading_day_of_previous_month()
@@ -421,7 +525,7 @@ def run_monitor(instruments_df, shares_day_df, shares_yesterday, reference_date,
                 print(f"[{datetime.now().strftime('%H:%M:%S')}] Neuer Handelstag erkannt: {new_last_trading_day.strftime('%d.%m.%Y')}")
 
                 # Prüfe, ob Shares-Daten für den neuen Handelstag verfügbar sind
-                new_shares_yesterday = shares_day_df.loc[new_last_trading_day] if new_last_trading_day in shares_day_df.index else None
+                new_shares_yesterday = shares_source.shares_for(new_last_trading_day)
 
                 if new_shares_yesterday is None:
                     screen_and_log(f"WARNING: Keine Shares-Daten für neuen Handelstag {new_last_trading_day.strftime('%d.%m.%Y')} verfügbar", logfile)
@@ -552,31 +656,25 @@ def main():
     logfile = settings.get("Files", {}).get("logfile")
     screen = settings.get("Output", {}).get("screen", True)
 
-    # Nur Instruments und Bookings laden - keine Preise mehr!
+    # Instruments laden; Stueckzahlen aus shares_day.xlsx von depot (DH-050)
     instruments_df = instruments_import_and_process(settings, logfile, screen=screen)
-    bookings_df = bookings_import_and_process(settings, instruments_df, logfile, screen=screen)
-
-    if instruments_df is None or bookings_df is None:
+    if instruments_df is None:
         print("Error: Could not load required data")
         return
 
-    # Bestimme das Ende der Buchungsdaten (heute + 30 Tage für zukünftige Handelstage)
-    end_date = pd.Timestamp(datetime.today().date()) + timedelta(days=30)
-    
-    # Erstelle Shares-DataFrame
-    shares_day_banks_df = shares_from_bookings(bookings_df, end_date, logfile, screen=screen)
-    if shares_day_banks_df is None:
-        print("Error: Could not process bookings data")
+    max_age_hours = float(settings.get("Timing", {}).get("shares_day_max_age_hours", 30))
+    shares_source = SharesDaySource(settings['Files']['shares_day'], instruments_df, logfile, max_age_hours)
+    if not shares_source.refresh(force=True):
+        screen_and_log("ERROR: shares_day konnte nicht geladen werden", logfile)
         return
-        
-    shares_day_df = aggregate_banks(shares_day_banks_df)
+    shares_source.check_stale()
 
     # Bestimme Referenzdaten
     last_trading_day = get_last_trading_day()
-    shares_yesterday = shares_day_df.loc[last_trading_day] if last_trading_day in shares_day_df.index else None
-    
+    shares_yesterday = shares_source.shares_for(last_trading_day)
+
     if shares_yesterday is None:
-        print("Error: No shares data available for reference date")
+        screen_and_log(f"ERROR: Keine Stueckzahlen fuer Referenzdatum {last_trading_day:%d.%m.%Y}", logfile)
         return
 
     # Monatliche Referenzdaten
@@ -587,7 +685,7 @@ def main():
         print(f"Monatliches Referenzdatum: {last_trading_day_prev_month.strftime('%d.%m.%Y')}")
 
     # Starte Monitoring
-    run_monitor(instruments_df, shares_day_df, shares_yesterday, last_trading_day, logfile, settings,
+    run_monitor(instruments_df, shares_source, shares_yesterday, last_trading_day, logfile, settings,
                 reference_date_month=last_trading_day_prev_month)
 
 
