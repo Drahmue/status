@@ -1,5 +1,17 @@
 # status – Changelog
 
+## 2026-11-12 – DSL-Speedtest: Ookla-Limit, Intervall 30 Min., Meldung bei Ausfall (datahub DH-051)
+
+- **Befund im Log:** Bis zum 29.10. gab es 138 CLI-Messungen am Tag, 6 pro Stunde. Seit dem 30.10. antwortet die Ookla-CLI oft mit `rc=429 Limit reached`. Erfolgreich sind nur noch etwa 2 bis 3 pro Stunde, im Abstand von 20 bis 31 Minuten.
+  - Am 11.11. gab es 140 Zyklen und 51 CLI-Messungen. 55 Ersatzmessungen über die Python-Lib liefen gegen **Telefónica Berlin**, weil ihre alte Serverliste keinen Telekom-Server enthält. 34 Messungen fehlten ganz.
+  - Bei 429 hat die CLI sofort noch einen zweiten Server versucht, das war zwecklos.
+- **Geändert in `status_dsl.py`:**
+  - Bei `rc=429` wird die Messung ausgelassen (Rückgabe `LIMIT_REACHED`), ohne zweiten Server und ohne Ersatzmessung (Entscheidung AH). Bei anderen CLI-Fehlern springt die Python-Lib weiter ein.
+  - Neu ist `[Monitoring] alarm_hours = 3`: Gibt es so lange keine erfolgreiche Messung, kommt einmal eine Telegram-Warnung über `_shared\notify_telegram`, mit der nächsten Messung eine Entwarnung.
+- **`status_dsl.ini`:** `refresh_time` 600 → 1800 (Entscheidung AH).
+- **Test:** Offline mit ersetzter CLI, Telegram und Uhr, 6/6 OK. Der Task `DSL Speedtest Monitoring` wurde nach OK von AH um 13:34 neu gestartet. Der erste Versuch lief ins Limit, weil die letzte Messung um 13:27 erst 7 Minuten zurücklag, und wurde wie vorgesehen ausgelassen. Commit `69ff8e1`, gepusht.
+- Hinweis: Die Messreihe enthält vom 30.10. bis 12.11. Messungen gegen Telefónica Berlin (`server_name` „Telefónica Germany …“). Für Auswertungen lassen sie sich über `server_name` herausfiltern.
+
 ## 2026-11-11 – Stückzahlen aus shares_day.xlsx (datahub DH-050), Neustart wegen Speicher (DH-056)
 
 - Anlass: `status.py` hat die Stückzahlen nur beim Start aus `bookings.xlsx` berechnet, und zwar nur bis Start + 30 Tage. Der Dienst lief seit dem 24.10. ohne Neustart. Neue Buchungen kamen deshalb nicht an, und nach 30 Tagen hätten die Stückzahlen ganz gefehlt.
