@@ -227,64 +227,59 @@ def aggregate_banks(df):
     return df_aggregated
 
 
-def get_historical_price(ticker, date, logfile=None, screen=True):
-    """Holt historischen Preis für ein bestimmtes Datum von yfinance"""
+def _close_at(data, day):
+    """Schlusskurs aus einem yfinance-DataFrame fuer `day` als float oder None."""
+    close_value = data.loc[day, 'Close']
+    price_val = close_value.iloc[0] if isinstance(close_value, pd.Series) else close_value
+    if pd.isna(price_val):
+        return None
+    try:
+        return float(str(price_val))
+    except (ValueError, TypeError):
+        return None
+
+
+def _historical_price(ticker, date, logfile=None, screen=True):
+    """Historischer Schlusskurs fuer `date`. -> (Preis oder None, exakt: True wenn der Kurs genau vom
+    Stichtag stammt, False wenn ersatzweise der letzte verfuegbare Kurs davor genommen wurde)."""
     try:
         if pd.isna(ticker) or str(ticker).strip() == '':
-            return None
-            
+            return None, False
+
         ticker_clean = str(ticker).strip().upper()
-        
-        # Hole Daten für einen Tag vor und nach dem gewünschten Datum
+
+        # Hole Daten für einige Tage vor und nach dem gewünschten Datum.
+        # threads=False: yfinance startet sonst je Aufruf Threads ueber 'multitasking', das jeden Thread
+        # dauerhaft in config["TASKS"] behaelt -> Handle- und Speicherleck im Dauerlauf (DH-056)
         start_date = date - timedelta(days=5)
         end_date = date + timedelta(days=2)
-        
-        data = yf.download(ticker_clean, start=start_date, end=end_date, progress=False, auto_adjust=False)
-        
+        data = yf.download(ticker_clean, start=start_date, end=end_date, progress=False, auto_adjust=False,
+                           threads=False)
+
         if data is None or data.empty or 'Close' not in data.columns:
-            return None
-            
+            return None, False
+
         # Versuche das exakte Datum zu finden
         target_date = pd.Timestamp(date).normalize()
         if target_date in data.index:
-            close_value = data.loc[target_date, 'Close']
-            if isinstance(close_value, pd.Series):
-                price_val = close_value.iloc[0]
-            else:
-                price_val = close_value
-            
-            # Konvertiere zu float, handle NaN und andere edge cases
-            if pd.isna(price_val):
-                return None
-            try:
-                return float(str(price_val))
-            except (ValueError, TypeError):
-                return None
-        
+            return _close_at(data, target_date), True
+
         # Falls das exakte Datum nicht verfügbar ist, nimm den letzten verfügbaren Preis vor dem Datum
         available_dates = data.index[data.index <= target_date]
         if not available_dates.empty:
-            last_available = available_dates.max()
-            close_value = data.loc[last_available, 'Close']
-            if isinstance(close_value, pd.Series):
-                price_val = close_value.iloc[0]
-            else:
-                price_val = close_value
-            
-            # Konvertiere zu float, handle NaN und andere edge cases
-            if pd.isna(price_val):
-                return None
-            try:
-                return float(str(price_val))
-            except (ValueError, TypeError):
-                return None
-            
-        return None
-        
+            return _close_at(data, available_dates.max()), False
+
+        return None, False
+
     except Exception as e:
         if logfile:
             screen_and_log(f"Fehler beim Abrufen historischer Daten für {ticker}: {e}", logfile, screen)
-        return None
+        return None, False
+
+
+def get_historical_price(ticker, date, logfile=None, screen=True):
+    """Holt historischen Preis für ein bestimmtes Datum von yfinance (Ersatz: letzter Kurs davor)"""
+    return _historical_price(ticker, date, logfile, screen)[0]
 
 
 def get_current_prices(instruments_df, logfile=None):
@@ -303,7 +298,9 @@ def get_current_prices(instruments_df, logfile=None):
 
         attempted += 1
         try:
-            data = yf.download(ticker, period="1d", interval="1m", progress=False, auto_adjust=False)
+            # threads=False: sonst Handle- und Speicherleck ueber 'multitasking' (DH-056)
+            data = yf.download(ticker, period="1d", interval="1m", progress=False, auto_adjust=False,
+                               threads=False)
             if data is not None and not data.empty and "Close" in data.columns:
                 close_data = data["Close"]
                 if not close_data.empty:
@@ -324,17 +321,26 @@ def get_current_prices(instruments_df, logfile=None):
     return prices
 
 
-def get_reference_values_from_yfinance(instruments_df, shares_yesterday, reference_date, logfile):
-    """Berechnet Referenzwerte direkt von yfinance für ein bestimmtes Datum"""
+def get_reference_values_from_yfinance(instruments_df, shares_yesterday, reference_date, logfile, price_cache=None):
+    """Berechnet Referenzwerte direkt von yfinance für ein bestimmtes Datum.
+    price_cache (dict, optional): Schlusskurse je (wkn, Stichtag). Gespeichert werden nur Kurse genau vom
+    Stichtag - sie aendern sich nicht mehr. Ersatzkurse (Stichtag bei yfinance noch nicht da) werden in der
+    naechsten Runde neu abgefragt (DH-056: vorher jede Runde alle Referenzkurse neu)."""
     reference_values = {}
-    
+    day = pd.Timestamp(reference_date).normalize()
+
     for wkn in shares_yesterday.index:
         if wkn in instruments_df.index:
             ticker = instruments_df.loc[wkn, 'ticker']
             share_count = shares_yesterday.loc[wkn, 'share']
-            
+
             if pd.notna(share_count) and share_count > 0:
-                historical_price = get_historical_price(ticker, reference_date, logfile)
+                if price_cache is not None and (wkn, day) in price_cache:
+                    historical_price = price_cache[(wkn, day)]
+                else:
+                    historical_price, exact = _historical_price(ticker, reference_date, logfile)
+                    if price_cache is not None and exact and historical_price is not None:
+                        price_cache[(wkn, day)] = historical_price
                 if historical_price is not None:
                     reference_values[wkn] = {
                         'price': historical_price,
@@ -506,6 +512,8 @@ def run_monitor(instruments_df, shares_source, shares_yesterday, reference_date,
     current_last_trading_day = reference_date
     current_last_trading_day_month = reference_date_month
     current_shares_yesterday = shares_yesterday
+    # Referenzkurse je (wkn, Stichtag), nur exakte Treffer (DH-056); enthaelt nur die aktuellen Stichtage
+    price_cache = {}
 
     while True:
         refresh_time = settings.get("Timing", {}).get("refresh_time", 60)
@@ -543,11 +551,22 @@ def run_monitor(instruments_df, shares_source, shares_yesterday, reference_date,
                 current_last_trading_day_month = new_last_trading_day_month
                 screen_and_log(f"Info: Monatlicher Referenztag aktualisiert auf {current_last_trading_day_month.strftime('%d.%m.%Y') if current_last_trading_day_month else 'None'}", logfile)
 
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] Starte Kursabfrage...")
+            # Zwischenspeicher auf die aktuellen Stichtage begrenzen (alte Tage fallen heraus)
+            aktuelle_tage = {pd.Timestamp(d).normalize() for d in (current_last_trading_day, current_last_trading_day_month)
+                             if d is not None}
+            for key in [k for k in price_cache if k[1] not in aktuelle_tage]:
+                del price_cache[key]
+
             current_prices = get_current_prices(instruments_df, logfile)
 
-            # Hole Referenzdaten direkt von yfinance mit aktuellen Referenzdaten
-            reference_data = get_reference_values_from_yfinance(instruments_df, current_shares_yesterday, current_last_trading_day, logfile)
+            # Referenzdaten (Vortag, Vormonat) - einmal je Runde, Kurse aus dem Zwischenspeicher (DH-056;
+            # vorher wurde der Monatsvergleich in der Schleife je WKN fuer alle WKN neu abgerufen)
+            reference_data = get_reference_values_from_yfinance(
+                instruments_df, current_shares_yesterday, current_last_trading_day, logfile, price_cache)
+            monthly_ref_data = {}
+            if current_last_trading_day_month is not None:
+                monthly_ref_data = get_reference_values_from_yfinance(
+                    instruments_df, current_shares_yesterday, current_last_trading_day_month, logfile, price_cache)
 
             output_rows = []
 
@@ -569,9 +588,6 @@ def run_monitor(instruments_df, shares_source, shares_yesterday, reference_date,
                             diff_value_month = ""
 
                             if current_last_trading_day_month is not None:
-                                monthly_ref_data = get_reference_values_from_yfinance(
-                                    instruments_df, current_shares_yesterday, current_last_trading_day_month, logfile)
-
                                 if wkn in monthly_ref_data:
                                     price_last_month = monthly_ref_data[wkn]['price']
                                     diff_price_month = round(price_today - price_last_month, 2)
@@ -627,12 +643,8 @@ def run_monitor(instruments_df, shares_source, shares_yesterday, reference_date,
             with open("static/depotdaten.json", 'w', encoding='utf-8') as f:
                 json.dump(json_data, f, ensure_ascii=False, indent=2)
 
-            print(f"Kursdifferenz bezogen auf Schlusskurs vom: {current_last_trading_day.strftime('%d.%m.%Y')}")
-            if current_last_trading_day_month is not None:
-                print(f"Monatliche Kursdifferenz bezogen auf Schlusskurs vom: {current_last_trading_day_month.strftime('%d.%m.%Y')}")
-            print(df_out.to_string(index=False))
-
-            print(f"-> Daten aktualisiert. Nächste Abfrage in {refresh_time} Sekunden.")
+            # Keine Ausgabe je Runde (DH-056): die Tabelle steht in depotdaten.json; die Startskripte puffern
+            # stdout bis Prozessende (ca. 37.000 Zeilen/Tag)
             time.sleep(refresh_time)
 
         except Exception as e:
