@@ -1,5 +1,18 @@
 # status – Changelog
 
+## 2026-11-12 – status.py: Handle- und Speicherleck behoben (datahub DH-056)
+
+- **Befund:** 18 h nach dem Neustart am 11.11. hatte `status.py` 419 MB belegt (+280 MB pro Tag) und 180.456 Handles offen.
+  - `yf.download` startet je Aufruf Threads über `multitasking` 0.0.12. Diese Bibliothek hängt jeden Thread an `config["TASKS"]` an und entfernt ihn nie. Ergebnis: +290 bis +380 Handles je Runde. Mit `threads=False` sind es ±0, gemessen in Testrunden ohne Schreiben.
+  - Eine Runde machte 152 `yf.download`. 121 davon entfielen auf den Monatsvergleich, weil er in der Schleife für jede WKN neu für alle WKN abgerufen wurde.
+- **Geändert in `status.py`:**
+  - A: `threads=False` in beiden `yf.download`.
+  - B: Die Referenzkurse für Vortag und Vormonat liegen in einem Zwischenspeicher je (wkn, Stichtag). Gespeichert werden nur exakte Treffer. Ersatzkurse, also wenn der Stichtag bei yfinance noch fehlt, werden in jeder Runde neu abgefragt. Der Zwischenspeicher hält nur die aktuellen Stichtage. Den Monatsvergleich berechnet der Code jetzt einmal je Runde. Neue Hilfsfunktion `_historical_price` liefert (Preis, exakt). `get_historical_price` und die Signaturen bleiben gleich.
+  - C: Die Tabelle wird nicht mehr in jeder Runde ausgegeben, sie steht in `depotdaten.json`.
+- **Test:** Die echte `run_monitor` lief 4 Runden im Testordner. Runde 1 machte 42 Abrufe, danach 20 je Runde. Die Handles blieben stabil. Keine Ausgabe, `depotdaten.json` gleich aufgebaut, Monatsvergleich 11/11, der Zwischenspeicher stimmt mit dem direkten Abruf überein. Den Ersatzfall habe ich offline mit Testdaten geprüft.
+- **Betrieb:** Neustart des `Stock Monitoring Service` am 12.11. um 15:49 nach OK von AH, Commit `e1cd736`. In 5 Runden blieben die Handles bei 538 bis 543 und der Speicher bei 197 MB. Eine Runde dauert etwa 63 statt 70 s.
+- Offen in DH-063 (datahub): Die Startskripte puffern stdout bis Prozessende, die Ausgabe gehört zeilenweise ins Monatslog.
+
 ## 2026-11-12 – DSL-Speedtest: Ookla-Limit, Intervall 30 Min., Meldung bei Ausfall (datahub DH-051)
 
 - **Befund im Log:** Bis zum 29.10. gab es 138 CLI-Messungen am Tag, 6 pro Stunde. Seit dem 30.10. antwortet die Ookla-CLI oft mit `rc=429 Limit reached`. Erfolgreich sind nur noch etwa 2 bis 3 pro Stunde, im Abstand von 20 bis 31 Minuten.
