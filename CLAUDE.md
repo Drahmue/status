@@ -119,8 +119,8 @@ This is a comprehensive monitoring system combining stock portfolio tracking wit
 **Data Flow:**
 
 *Stock Monitoring:*
-1. `status.py` reads instrument definitions and booking transactions from Excel files
-2. Fetches current prices using yfinance API
+1. `status.py` reads instrument definitions from Excel and share counts from `shares_day.xlsx` (written daily by depot, reloaded without restart since DH-050)
+2. Fetches current prices using yfinance API every 60 s (`threads=False`, reference prices cached per day, see "Handle/Memory Leak" below)
 3. Processes portfolio positions across multiple banks/accounts
 4. Exports real-time data to `static/depotdaten.json`
 
@@ -427,3 +427,31 @@ From 2026-09-30 on, the dashboard mostly showed speedtest results against server
 **Related Files:**
 - `status_dsl.py`, `status_dsl.ini`
 - `CHANGELOG_2026-10-12.md` - Full incident writeup
+
+### DSL Speedtest: Ookla Rate Limit rc=429 (Fixed: 2026-11-12, datahub DH-051)
+
+**Problem:** Since 2026-10-30 the Ookla CLI often returns `rc=429 Limit reached`. Only about 2–3 tests per hour succeed (before: 6), usually 20–31 min apart. The Python lib fallback then measured against Telefónica Berlin, so the series was mixed. On 11.11. 24 % of the measurements were missing.
+
+**Fix Implemented:**
+- `perform_speedtest_cli()` returns `LIMIT_REACHED` on rc=429: no second server, **no Python-lib fallback** (decision AH). Other CLI errors still fall back.
+- `status_dsl.ini`: `refresh_time = 1800` (was 600).
+- New `[Monitoring] alarm_hours = 3`: one Telegram warning per outage if there was no successful measurement for 3 h, all-clear with the next success (`_shared\notify_telegram`).
+- Data note: from 2026-10-30 to 2026-11-12 `speedtest_data.parquet` contains measurements against Telefónica Berlin (filter by `server_name`).
+
+### Handle/Memory Leak in status.py (Fixed: 2026-11-12, datahub DH-056)
+
+**Problem:** `status.py` grew by about 280–400 MB per day (7.3 GB after 18 days, 24.10.–11.11.) and held 180,456 handles after 18 h.
+
+**Root Cause:**
+1. `yf.download()` with its default `threads=True` starts threads via `multitasking` 0.0.12, which appends every thread to `multitasking.config["TASKS"]` and never removes it. That leaks about 300 handles plus memory per monitoring round.
+2. 152 `yf.download()` calls per 60 s round: the monthly reference was fetched inside the per-WKN loop for **all** WKNs (N² calls). The reference prices only change once per day.
+
+**Fix Implemented:**
+- `threads=False` in both `yf.download()` calls. There is no speed loss, because each call fetches one ticker. **Keep it that way. Any new `yf.download()` in a long-running process needs `threads=False`.**
+- Reference prices (previous trading day, last trading day of previous month) are cached per `(wkn, date)` in `run_monitor()`. Only exact hits are cached: if Yahoo does not have the reference date yet (e.g. early morning), the fallback price is re-fetched every round. New helper `_historical_price()` returns `(price, exact)`. `get_historical_price()` keeps its signature.
+- Monthly reference is computed once per round: 152 → 20 calls per round after the first one.
+- No table output to stdout per round (the start script buffers stdout until the process ends, see datahub DH-063).
+
+**Verified:** After the restart on 12.11. 15:49, handles stayed at 538–543 over 5 rounds, private memory at 197 MB.
+
+**Related Files:** `status.py`, `status-changelog.md`

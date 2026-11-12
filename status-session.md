@@ -1,26 +1,31 @@
-# status – Session 2026-10-23
+# status – Session 2026-11-12 (aus datahub, HauServer)
 
 ## Ausgangspunkt
-Lokales `main` lag 21 Commits hinter `origin/main`. Drei Dateien waren geändert, aber nicht committet: `status.ini`, `Setup-TaskScheduler-Fixed.ps1` und `Status 20250901.docx`.
+- Am 11.11. hat die Prüfung aller Tasks unter datahub zwei Probleme ergeben:
+  - DH-051: Beim DSL-Speedtest fehlen Messungen, weil Ookla mit 429 ablehnt.
+  - DH-056: `status.py` belegte nach 18 Tagen 7,3 GB. Am 11.11. gab es einen Notfall-Neustart.
 
 ## Bearbeitete Themen
-- Lokal und Repo verglichen
-- Die lokalen Änderungen verworfen und per Fast-Forward gepullt
-- `CLAUDE.md` an `HauServer` und die lokalen `D:\`-Pfade angepasst, committet und gepusht (`d807ed5`)
+- **DH-051 DSL:** Bei 429 wird die Messung ausgelassen, ohne Ersatzmessung. Intervall 1800 s, Telegram nach 3 h ohne Messung. Commits `69ff8e1` und `70bf492`, Neustart des Tasks `DSL Speedtest Monitoring` um 13:34.
+- **DH-056 status.py:**
+  - Ursache war `multitasking` (von yfinance), das jeden Thread dauerhaft festhält. Dazu kamen 152 Abrufe je Runde.
+  - Lösung: `threads=False`, Zwischenspeicher für die Referenzkurse (nur exakte Treffer), Monatsvergleich einmal je Runde, keine Ausgabe je Runde.
+  - Commits `e1cd736` und `4318e07`, Neustart des `Stock Monitoring Service` um 15:49.
+- `CLAUDE.md`: zwei neue Einträge unter „Known Issues and Fixes“, Datenfluss aktualisiert.
 
 ## Entscheidungen & Erkenntnisse
-- Der Remote hatte die Umbenennung auf HauServer schon erledigt. `status.ini` nutzt lokale `D:\`-Pfade statt UNC, und `Setup-TaskScheduler-Fixed.ps1` wurde gelöscht. Deshalb waren die lokalen Änderungen überflüssig.
-- Lokal und Remote sind jetzt gleich, und es gibt keine offenen Änderungen mehr.
-- In den gepflegten Dokus stand noch der alte Servername (ST-01, in derselben Session erledigt).
+- Ein Dauerläufer darf `yf.download` nur mit `threads=False` aufrufen.
+- Referenzkurse ändern sich nur einmal am Tag. Ein Ersatzkurs darf aber nicht in den Zwischenspeicher, weil er sonst den ganzen Tag stehen bliebe.
+- DSL: Lieber weniger Messungen gegen Telekom Stuttgart als gemischt mit Telefónica Berlin (Entscheidung AH).
 
 ## Verworfene Ansätze
-- `git stash` für die lokalen Änderungen: nicht nötig, weil der Remote sie schon abdeckt.
-- `\\HauServer\...` für die Excel-Quellen in `CLAUDE.md`: Stattdessen `D:\`, passend zu `status.ini`.
-
-- ST-01 erledigt: Der alte Servername ist aus allen gepflegten Dokus entfernt. Nur die historischen `CHANGELOG_*.md` und `_Archiv` enthalten ihn noch.
+- `multitasking.config["TASKS"]` je Runde leeren: greift in Interna einer fremden Bibliothek ein.
+- Regelmäßiger Neustart per Task: behandelt nur das Symptom.
+- DSL: Ersatzmessung bei 429 behalten, Intervall 20 Min.
 
 ## Nächster Schritt beim Wiederaufnehmen
-Keine offenen Aufgaben. Neue Themen nach Bedarf.
+- Am 13.11. den Verlauf messen: Handles und Speicher von `status.py` sollen über den ganzen Tag flach bleiben. `status_dsl.py` lag 2 h nach dem Start bei 296 MB, prüfen, ob das wächst. DSL: rund 2 Messungen je Stunde ohne 429?
 
 ## Noch offene Punkte
-- keine
+- Die Startskripte puffern stdout bis Prozessende, sie sollen zeilenweise ins Monatslog schreiben (datahub DH-063).
+- Speicherwarnung im Watchdog (hauserver HS-22).
