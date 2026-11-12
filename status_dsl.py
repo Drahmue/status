@@ -20,6 +20,21 @@ from datetime import datetime
 import speedtest
 import pandas as pd
 
+try:
+    sys.path.insert(0, r"D:\Dataserver\_Batchprozesse\_shared")
+    from notify_telegram import send_warning, send_info
+except ImportError:  # Messung laeuft auch ohne Meldung weiter
+    def send_warning(*_a, **_k):
+        return False
+
+    def send_info(*_a, **_k):
+        return False
+
+SCRIPT_NAME = "status_dsl"
+# Rueckgabe von perform_speedtest_cli bei rc=429 (Ookla-Limit, seit 2026-10-30 etwa 1 Test je 20-30 Min.):
+# kein zweiter Server, keine Ersatzmessung ueber die Python-Lib (anderer Server, DH-051)
+LIMIT_REACHED = "limit_reached"
+
 
 def screen_and_log(text, logfile=None, screen=True):
     """Log message to screen and/or file with timestamp"""
@@ -79,6 +94,7 @@ def settings_import(settings_file, logfile=None, screen=True):
         "country": "Germany",
         "max_ping_ms": 1000.0,  # results above are treated as measurement errors
         "refresh_time": 300,  # 5 minutes default
+        "alarm_hours": 3.0,  # Telegram warning if no successful measurement for this long (0 = off)
     }
 
     cfg = configparser.ConfigParser()
@@ -121,6 +137,13 @@ def settings_import(settings_file, logfile=None, screen=True):
         settings["refresh_time"] = int(timing_section.get("refresh_time", defaults["refresh_time"]))
     except (ValueError, TypeError):
         settings["refresh_time"] = defaults["refresh_time"]
+
+    # Monitoring section
+    monitoring_section = dict(cfg.items("Monitoring")) if cfg.has_section("Monitoring") else {}
+    try:
+        settings["alarm_hours"] = float(monitoring_section.get("alarm_hours", defaults["alarm_hours"]))
+    except (ValueError, TypeError):
+        settings["alarm_hours"] = defaults["alarm_hours"]
 
     # Create directories if needed
     for key in ("logfile", "json_output", "parquet_data"):
@@ -200,6 +223,11 @@ def perform_speedtest_cli(cli_path, logfile, screen=True, server_id=None, secure
                 return result
 
             err = (completed_process.stderr or "").strip()
+            if completed_process.returncode == 429:
+                # Limit gilt fuer den Anschluss, nicht den Server: weiterer Versuch zwecklos
+                screen_and_log("WARN: Ookla-Limit erreicht (rc=429) – Messung ausgelassen, "
+                               "kein weiterer Server, keine Ersatzmessung.", logfile, screen)
+                return LIMIT_REACHED
             screen_and_log(f"WARN: Ookla-CLI fehlgeschlagen (rc={completed_process.returncode}, stderr={err})", logfile, screen)
 
         screen_and_log("ERROR: Ookla-CLI Messung fehlgeschlagen (alle Varianten).", logfile, screen)
@@ -429,6 +457,8 @@ def run_single_speedtest(settings, logfile):
     # Try Ookla CLI first if configured
     if use_cli and cli_path and os.path.exists(cli_path):
         results = perform_speedtest_cli(cli_path, logfile, server_id=server_id, secure=secure)
+        if results == LIMIT_REACHED:
+            return False
         if not results:
             screen_and_log("WARN: CLI-Messung fehlgeschlagen – Fallback auf Python-Lib.", logfile, True)
 
@@ -488,14 +518,32 @@ def main():
         logfile = settings["logfile"]
         refresh_time = settings.get("refresh_time", 300)
         
+        alarm_hours = settings.get("alarm_hours", 3.0)
+
         screen_and_log("Status DSL Speedtest monitoring gestartet", logfile, True)
         screen_and_log(f"Aktualisierungsintervall: {refresh_time} Sekunden", logfile, True)
-        
+
+        # Meldung bei anhaltendem Ausfall (DH-051): einmal je Ausfall, Entwarnung bei der naechsten Messung
+        last_success = datetime.now()
+        alarm_sent = False
+
         while True:
             try:
                 success = run_single_speedtest(settings, logfile)
-                if not success:
+                if success:
+                    if alarm_sent:
+                        send_info(SCRIPT_NAME, f"DSL-Speedtest misst wieder (Ausfall seit {last_success:%d.%m. %H:%M}).")
+                        screen_and_log("Entwarnung gesendet: Messung wieder erfolgreich", logfile)
+                        alarm_sent = False
+                    last_success = datetime.now()
+                else:
                     screen_and_log("WARN: Speedtest fehlgeschlagen, versuche es beim nächsten Zyklus erneut.", logfile)
+                    hours = (datetime.now() - last_success).total_seconds() / 3600
+                    if alarm_hours and hours >= alarm_hours and not alarm_sent:
+                        send_warning(SCRIPT_NAME, f"Seit {last_success:%d.%m. %H:%M} ({hours:.1f} h) keine erfolgreiche "
+                                                  f"DSL-Messung (Ookla-Limit 429 oder Messfehler, siehe status_dsl.log).")
+                        screen_and_log(f"Meldung gesendet: {hours:.1f} h ohne erfolgreiche Messung", logfile)
+                        alarm_sent = True
                 
                 screen_and_log(f"Warte {refresh_time} Sekunden bis zum nächsten Test...", logfile, True)
                 time.sleep(refresh_time)
