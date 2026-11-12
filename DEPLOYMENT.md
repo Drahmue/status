@@ -129,7 +129,8 @@ See `CLAUDE.md` → "NTFS Permission Bug After Server Rebuild" and `TROUBLESHOOT
 Ensure `Service` account has access to:
 - `D:\Dataserver\` (data root on HauServer)
 - `D:\Dataserver\Dummy\Finance_Input\Instrumente.xlsx`
-- `D:\Dataserver\Dummy\Finance_Input\bookings.xlsx`
+- `D:\Dataserver\Dummy\Finance_Output\shares_day.xlsx` (read; written daily 05:00 by depot)
+- `D:\Dataserver\Dummy\Finance_Input\bookings.xlsx` (only for `test_*.py`)
 
 **Test network access:**
 ```powershell

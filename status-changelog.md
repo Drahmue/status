@@ -1,5 +1,19 @@
 # status – Changelog
 
+## 2026-11-11 – Stückzahlen aus shares_day.xlsx (datahub DH-050), Neustart wegen Speicher (DH-056)
+
+- Anlass: `status.py` hat die Stückzahlen nur beim Start aus `bookings.xlsx` berechnet, und zwar nur bis Start + 30 Tage. Der Dienst lief seit dem 24.10. ohne Neustart. Neue Buchungen kamen deshalb nicht an, und nach 30 Tagen hätten die Stückzahlen ganz gefehlt.
+- Neu: Die Klasse `SharesDaySource` liest `D:\Dataserver\Dummy\Finance_Output\shares_day.xlsx`. Diese Datei berechnet depot (Task `Depot Script Daily Fixed`) täglich um 05:00 mit denselben Funktionen `shares_from_bookings` und `aggregate_banks`. Die Monitoring-Schleife prüft in jeder Runde den Zeitstempel der Datei. Ist die Datei neu und seit mindestens 120 s unverändert, liest `status.py` sie ein, ohne dass ein Neustart nötig ist. Wenn das Lesen scheitert, bleibt der bisherige Stand stehen, und das Log bekommt eine Warnung (einmal je Dateistand). Fehlt ein Tag, gilt die letzte Zeile davor, denn die Datei endet am letzten Kurstag. Ist die Datei älter als `shares_day_max_age_hours`, steht eine Warnung im Log.
+- `main()` importiert die Buchungen nicht mehr. Die Buchungsfunktionen bleiben nur für die Testskripte `test_*.py`. Die Startprüfung `required_files` umfasst jetzt `Instrumente.xlsx` und `shares_day.xlsx`.
+- `status.ini`: In `[Files]` ist `shares_day` neu, in `[Timing]` `shares_day_max_age_hours = 30`. `bookings` bleibt mit dem Kommentar „nur Testskripte“.
+- Geprüft: Die alte Berechnung und die xlsx stimmen überein (32 WKN, 1442 Tage, 0 abweichende Zellen). 15 Funktionstests von `SharesDaySource` liefen auf einer Kopie der Datei, darunter Nachladen, eine frisch geschriebene Datei, eine defekte Datei, eine fehlende Datei und eine veraltete Datei. Die Warnungstexte habe ich dabei nicht im Log gesehen, geprüft ist nur der Codepfad.
+- Der Dienst wurde am 11.11. zweimal neu gestartet. Um 21:33 lief noch der alte Code, der Neustart diente dem Speicher (vorher 7,3 GB, DH-056). Um 21:38 startete der neue Code. Im Log steht `shares_day geladen: 32 WKN, 30.11.2022-10.11.2026, Datei vom 11.11.2026 05:01`. Commit `aca3a15` ist gepusht, nach einem Rebase auf `dbdf2a0` und `eda3833`, die nur Doku betreffen.
+- Doku nachgezogen: `CLAUDE.md`, `DEPLOYMENT.md`, `TROUBLESHOOTING_STOCK_MONITORING.md` und `CHANGELOG.md` (Abschnitt 5.5) nennen jetzt `shares_day.xlsx` als Quelle.
+- 12.11.: ST-02 erledigt. depot schrieb die Datei um 05:01:10, status hat sie um 05:04:15 ohne Neustart nachgeladen. Der Speicher liegt bei 49 MB. ST-03 (AHMAIN-Pull) angelegt.
+
+Verworfene Ansätze:
+- Die 30-Tage-Grenze einfach erhöhen oder die Buchungen täglich neu einlesen: Die Berechnung gäbe es dann doppelt, in depot und in status, und sie könnte auseinanderlaufen.
+
 ## 2026-10-23 – Lokal mit Repo abgeglichen, CLAUDE.md auf HauServer umgestellt
 
 - Lokal mit `origin/main` verglichen: Lokal war 21 Commits hinter dem Remote und hatte keine eigenen Commits. Dazu kamen 3 Änderungen, die nicht committet waren.

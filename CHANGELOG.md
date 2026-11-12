@@ -353,7 +353,8 @@ Write-Host "`n✅ Verifizierung abgeschlossen!" -ForegroundColor Green
 |-----------|------|--------------|
 | Standard-Bibliothek | `\\HauServer\Dataserver\Programmier Projekte\Python\Standardbibliothek\Standardfunktionen_aktuell.py` | ahlib (Logging, File-Ops) |
 | Instrumente Excel | `D:\Dataserver\Dummy\Finance_Input\Instrumente.xlsx` | Ticker, WKN, Namen |
-| Buchungen Excel | `D:\Dataserver\Dummy\Finance_Input\bookings.xlsx` | Transaktionshistorie |
+| Stückzahlen Excel | `D:\Dataserver\Dummy\Finance_Output\shares_day.xlsx` | Stückzahlen je Tag/WKN von depot (05:00), seit 11.11.2026 (DH-050) |
+| Buchungen Excel | `D:\Dataserver\Dummy\Finance_Input\bookings.xlsx` | Transaktionshistorie, nur noch für `test_*.py` |
 
 ---
 

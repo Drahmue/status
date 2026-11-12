@@ -93,22 +93,27 @@ Get-Content "D:\Dataserver\_Batchprozesse\status\status.log" | Select-String -Pa
 2. `Arbeitsverzeichnis wurde auf das Verzeichnis des Callers gesetzt`
 3. `Arbeitsverzeichnis erfolgreich gesetzt`
 4. `Datei '...\Instrumente.xlsx' ist verfügbar`
-5. `Datei '...\bookings.xlsx' ist verfügbar`
+5. `Datei '...\shares_day.xlsx' ist verfügbar`
 6. `Verfügbarkeitscheck abgeschlossen: 2/2 Dateien verfügbar`
 7. `Alle Dateien verfügbar und erfolgreich geladen`
 8. `Initialisierung erfolgreich abgeschlossen`
 9. `Instruments-Datei erfolgreich geladen`
-10. `Alle WKNs aus Buchungen sind in Instruments vorhanden`
-11. `Buchungen-Import und -Verarbeitung erfolgreich abgeschlossen`
-12. `Positionen (shares) auf Tagesbasis erfolgreich aufgebaut`
+10. `shares_day geladen: NN WKN, TT.MM.JJJJ-TT.MM.JJJJ, Datei vom TT.MM.JJJJ HH:MM`
 
-**Tägliche Updates (um Mitternacht):**
+Seit 11.11.2026 (DH-050) kommen die Stückzahlen aus `shares_day.xlsx` (depot, täglich 05:00), nicht mehr aus `bookings.xlsx`.
+
+**Tägliche Updates:**
 - `[YYYY-MM-DD 00:00:XX] INFO: Referenzdaten für neuen Handelstag DD.MM.YYYY aktualisiert`
+- `Info: shares_day ohne TT.MM.JJJJ, verwende Stand TT.MM.JJJJ` – normal zwischen Mitternacht und dem depot-Lauf
+- nach 05:00: `shares_day geladen: … Datei vom <heute> 05:0x` (Nachladen ohne Neustart)
 
 **Fehlermeldungen:**
 - `ERROR: ...` - Schwerwiegende Fehler
+- `ERROR: shares_day konnte nicht geladen werden` - beim Start, Dienst beendet sich → Datei/Task depot prüfen
+- `WARNING: shares_day ist NN h alt (Grenze 30 h)` - depot ausgefallen, Stückzahlen ohne neue Buchungen
+- `WARNING: shares_day nicht lesbar, behalte bisherigen Stand` / `nicht erreichbar` - Datei defekt oder gesperrt
+- `WARNING: WKNs aus shares_day fehlen in Instruments` - Datenfehler, diese WKN werden nicht bewertet
 - `WARNING: Keine Shares-Daten für neuen Handelstag` - Daten noch nicht verfügbar
-- `ERROR: WKNs aus Buchungen fehlen in Instruments` - Datenfehler
 
 ### 4. Windows Event Log prüfen
 
@@ -211,7 +216,7 @@ Set-ScheduledTask -TaskName "Stock Monitoring Service" -TaskPath "\AHSkripts\" -
 # Netzwerk-Verfügbarkeit testen
 Test-Path "D:\Dataserver"
 Test-Path "D:\Dataserver\Dummy\Finance_Input\Instrumente.xlsx"
-Test-Path "D:\Dataserver\Dummy\Finance_Input\bookings.xlsx"
+Test-Path "D:\Dataserver\Dummy\Finance_Output\shares_day.xlsx"
 ```
 
 **Lösungen:**

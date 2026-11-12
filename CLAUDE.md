@@ -144,7 +144,7 @@ This is a comprehensive monitoring system combining stock portfolio tracking wit
 - `status_dsl.ini` - DSL speedtest configuration with Ookla CLI path, server preferences, update intervals
 - `status_zaehler.ini` - Meter monitoring configuration with Tasmota device URL, Wandlerfaktor and update interval
 - `dsl_speedtest_viewer.ini` - Viewer configuration for data analysis tools
-- External dependencies on network-shared Excel files for instruments and bookings data
+- External dependencies on Excel files for instruments and daily share counts (`shares_day.xlsx`, written by depot)
 - Configurable refresh intervals for both stock and speedtest monitoring
 
 **Key Data Files:**
@@ -178,7 +178,8 @@ This provides utility functions for logging, file operations, and configuration 
 
 **External Data Sources:**
 - Instrument definitions: `D:\Dataserver\Dummy\Finance_Input\Instrumente.xlsx`
-- Transaction history: `D:\Dataserver\Dummy\Finance_Input\bookings.xlsx`
+- Share counts per day and WKN: `D:\Dataserver\Dummy\Finance_Output\shares_day.xlsx` (written daily 05:00 by task `Depot Script Daily Fixed`; `status.py` reloads it without restart via `SharesDaySource`, warns in log if older than `shares_day_max_age_hours`)
+- Transaction history: `D:\Dataserver\Dummy\Finance_Input\bookings.xlsx` (only used by `test_*.py` since 2026-11-11, DH-050)
 
 ### Key Features
 
