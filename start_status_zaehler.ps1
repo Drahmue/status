@@ -87,9 +87,16 @@ try {
     Add-Content -Path $LOGFILE -Value "$timestamp Starting Python script (status_zaehler.py)..."
 
     # status_zaehler.py runs continuously, so this will block until the script is stopped
-    $pythonResult = & $venvPath -u $pythonScript 2>&1
-    Add-Content -Path $LOGFILE -Value $pythonResult
-    $RC = $LASTEXITCODE
+    # Ausgabe zeilenweise sofort ins Log statt bis Prozessende puffern (datahub DH-063, DH-056)
+    $loggedLib = "D:\Dataserver\_Batchprozesse\_shared\Invoke-Logged.psm1"
+    if (Test-Path $loggedLib) {
+        Import-Module $loggedLib -Force
+        $RC = Invoke-Logged -FilePath $venvPath -ArgumentList @('-u', $pythonScript) -LogFile $LOGFILE -Mode Stream
+    } else {
+        $pythonResult = & $venvPath -u $pythonScript 2>&1
+        Add-Content -Path $LOGFILE -Value $pythonResult
+        $RC = $LASTEXITCODE
+    }
 
     # Log completion (only reached if script exits)
     $timestamp = Get-Date -Format "[yyyy-MM-dd HH:mm:ss]"

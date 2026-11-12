@@ -1,5 +1,11 @@
 # status – Changelog
 
+## 2026-11-12 – Startskripte schreiben zeilenweise ins Log (datahub DH-063)
+
+- `start_status.ps1`, `start_app.ps1`, `start_status_dsl.ps1` und `start_status_zaehler.ps1` rufen Python jetzt über `_shared\Invoke-Logged.psm1 -Mode Stream` auf. Jede Zeile von stdout und stderr steht sofort mit Zeitstempel im Monatslog `logs\<name>_yyyy-MM.log`. Vorher wurde alles bis zum Prozessende in `$pythonResult` gepuffert, und beim Stoppen ging es verloren. Fehlt der Helfer, läuft der alte Aufruf.
+- Die 4 Tasks wurden am 12.11. zwischen 17:16 und 17:18 nach OK von AH neu gestartet. Die Startlogs füllen sich sofort, Web-App HTTP 200, die JSON-Dateien sind aktuell.
+- Hinweis: Ältere Teile der Monatslogs stammen von `Add-Content` (unter PS 5.1 ANSI), neue Zeilen sind UTF-8. Ab Dezember ist die Datei einheitlich.
+
 ## 2026-11-12 – status.py: Handle- und Speicherleck behoben (datahub DH-056)
 
 - **Befund:** 18 h nach dem Neustart am 11.11. hatte `status.py` 419 MB belegt (+280 MB pro Tag) und 180.456 Handles offen.
