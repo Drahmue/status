@@ -162,9 +162,11 @@ try {
 
     # Ausgabe zeilenweise sofort ins Log statt bis Prozessende puffern (datahub DH-063, DH-056)
     $loggedLib = "D:\Dataserver\_Batchprozesse\_shared\Invoke-Logged.psm1"
+    $loggedUsed = $false
     if (Test-Path $loggedLib) {
         Import-Module $loggedLib -Force
         $RC = Invoke-Logged -FilePath $venvPath -ArgumentList @('-u', $pythonScript) -LogFile $LOGFILE -Mode Stream
+        $loggedUsed = $true   # Invoke-Logged 1.1 meldet Exit <> 0 selbst (gedrosselt, hauserver HS-22)
     } else {
         $pythonResult = & $venvPath -u $pythonScript 2>&1
         Add-Content -Path $LOGFILE -Value $pythonResult
@@ -178,7 +180,7 @@ try {
     } else {
         Add-Content -Path $LOGFILE -Value "$timestamp ERROR: Python script failed with exit code $RC"
         Add-Content -Path $ERRORLOG -Value "$timestamp ERROR: Python script failed with exit code $RC"
-        if ($notifyAvailable) {
+        if ($notifyAvailable -and -not $loggedUsed) {
             Send-ErrorNotification -ScriptName "start_status (status.py)" -ExitCode $RC `
                 -ErrorMessage "Python script exited with code $RC" -LogFile $LOGFILE
         }
